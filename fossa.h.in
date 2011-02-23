@@ -1,0 +1,47 @@
+/*  This file is part of fossa
+    Copyright (C) 2011  James A. Shackleford
+
+    fossa is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#ifndef _fossa_h_
+#define _fossa_h_
+
+#include <elf.h>
+
+#cmakedefine _arch_i386_ 1
+#cmakedefine _arch_x86_64_ 1
+
+#if (_arch_x86_64_)
+#define BASE_TEXT 0x00400000
+typedef Elf64_Ehdr  Elf_Ehdr;
+typedef Elf64_Phdr  Elf_Phdr;
+typedef Elf64_Shdr  Elf_Shdr;
+typedef Elf64_Dyn   Elf_Dyn;
+typedef Elf64_Word  Elf_Word;
+typedef Elf64_Sym   Elf_Sym;
+typedef Elf64_Addr  Elf_Addr;
+#else 
+#define BASE_TEXT 0x08048000
+typedef Elf32_Ehdr  Elf_Ehdr;
+typedef Elf32_Phdr  Elf_Phdr;
+typedef Elf32_Shdr  Elf_Shdr;
+typedef Elf32_Dyn   Elf_Dyn;
+typedef Elf32_Word  Elf_Word;
+typedef Elf32_Sym   Elf_Sym;
+typedef Elf32_Addr  Elf_Addr;
+#endif /* if (HAVE_32_BIT) */
+
+
+#endif /* #ifndef _fossa_h_ */
