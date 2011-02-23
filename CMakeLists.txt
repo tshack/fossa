@@ -60,6 +60,7 @@ ADD_CUSTOM_TARGET (libcuzmem
 SET ( SRC_fossa
     fossa.c
     ptrace_wrap.c
+    elf_tools.c
     child_tools.c
     inject.c
 )

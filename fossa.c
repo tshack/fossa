@@ -24,6 +24,7 @@
 
 #include "fossa.h"
 #include "ptrace_wrap.h"
+#include "elf_tools.h"
 #include "child_tools.h"
 #include "inject.h"
 
@@ -266,7 +267,7 @@ main (int argc, char* argv[], char* envp[])
     // --------------------------------------------------------------------------
 
     // initialization
-    child_get_main (argv[1], &main_start, &main_len);
+    elf_get_func (argv[1], "main", &main_start, &main_len);
     pid = child_fork (argv[1], &argv[1]);
     old_opcode = init_child (pid, &main_start, &main_len);
     tbox = create_toolbox (pid);

@@ -18,8 +18,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <fcntl.h>
-#include <errno.h>
 #include <link.h>
 #include <sys/user.h>
 #include <sys/stat.h>
@@ -74,101 +72,6 @@ child_fork (char* prg, char* parms)
     return child_pid;
 }
 
-
-void
-child_get_main (char* elf_file, long int *main_start, long int *main_len)
-{
-    int i, fd_elf = -1;
-    u_char* base = NULL;
-    struct stat elf_stat;
-    Elf_Ehdr      *ehdr   = NULL;
-    Elf_Phdr      *phdr   = NULL;
-    Elf_Shdr      *shdr   = NULL;
-    Elf_Sym       *sym    = NULL;
-    char* strtable = NULL;
-    char* sym_name = NULL;
-    size_t cur_size = 0;
-    size_t sym_size = 0;
-
-    
-    fd_elf = open (elf_file, O_RDONLY);
-    if (fd_elf == -1) {
-        fprintf (stderr, "Could not open %s: %s\n", elf_file, strerror(errno));
-        exit (1);
-    }
-
-    if (fstat (fd_elf, &elf_stat) == -1) {
-        fprintf (stderr, "Could not stat %s: %s\n", elf_file, strerror(errno));
-        exit (1);
-    }
-
-    base = (u_char *)calloc (sizeof(u_char), elf_stat.st_size);
-    if (!base) {
-        fprintf (stderr, "No enough memory\n");
-        close (fd_elf);
-        exit (1);
-    }
-
-    if (read (fd_elf, base, elf_stat.st_size) != elf_stat.st_size) {
-        fprintf (stderr, "Eror while copying file into memory: %s\n", strerror(errno));
-        free (base);
-        close (fd_elf);
-        exit (1);
-    }
-
-    close (fd_elf);
-
-    // We now have the ELF header
-    ehdr = (Elf_Ehdr *)base;
-
-    // Get the program and section headers
-    phdr = (Elf_Phdr *)(base + ehdr->e_phoff);
-    shdr = (Elf_Shdr *)(base + ehdr->e_shoff);
-
-    // Get offset to the string table (.shstrtab)
-    // .shstrtab holds the ELF section names
-    strtable = (char*)(base + shdr[ehdr->e_shstrndx].sh_offset);
-
-    // Cycle through section headers
-    for (i=0; i<ehdr->e_shnum; i++) {
-        if (shdr[i].sh_type == SHT_DYNSYM) {
-            sym = (Elf_Sym*)(base + shdr[i].sh_offset);
-            sym++;
-
-            sym_size = shdr[i].sh_entsize;
-            cur_size +=sym_size;
-
-            do {
-#if _arch_i386_
-                if (ELF32_ST_TYPE(sym->st_info) != STT_SECTION) {
-#elif _arch_x86_64_
-                if (ELF64_ST_TYPE(sym->st_info) != STT_SECTION) {
-#endif
-                    sym_name = (base + shdr[shdr[i].sh_link].sh_offset) + sym->st_name;
-                    if (!strcmp ("main", sym_name)) {
-                        *main_start = sym->st_value;
-                        *main_len   = sym->st_size;
-
-                        // Skip function prologue
-#if 0
-                        *main_start += 9;
-                        *main_len -= 9;
-
-                        // Don't count function epilogue
-                        *main_len -= 2;
-#endif
-
-                        free (base);
-                        return;
-                    }
-                }
-
-                cur_size += sym_size;
-                sym++;
-            } while (cur_size < shdr[i].sh_size);
-        }
-    }
-}
 
 
 // Get the address of the Global Offset Table within

@@ -15,48 +15,15 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
-#ifndef _child_tools_h_
-#define _child_tools_h_
+#ifndef _elf_tools_h_
+#define _elf_tools_h_
 
 #include "fossa.h"
 
-// library map
-struct lib_map {
-    int num_syms;
-    Elf_Addr symtab;
-    Elf_Addr strtab;
-    Elf_Addr base_addr;
-};
-
-char*
-file_from_path (char* full_path);
-
 u_char*
 elf_load (char* elf_file);
-void
 
+void
 elf_get_func (char* elf_file, const char *func_name, long int *func_start, long int *func_len);
 
-pid_t
-child_fork (char* prg, char* parms);
-
-Elf_Addr
-child_get_got (pid_t pid);
-
-struct link_map*
-child_get_linkmap (pid_t pid);
-
-struct lib_map*
-child_get_lib (pid_t pid, struct link_map *entry);
-
-unsigned long
-child_get_sym ( int pid, char* sym_name, struct lib_map* lib);
-
-struct link_map*
-child_search_linkmap (pid_t pid, char *lib_name);
-
-unsigned long
-child_dlsym (int pid, char *sym_name, char *lib_name);
-
-#endif /* #ifndef _child_tools_h_ */
+#endif /*#ifndef _elf_tools_h_ */
