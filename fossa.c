@@ -17,10 +17,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
-#include <link.h>           /* for struct link_map */
-#include <sys/user.h>
 
 #include "fossa.h"
 #include "ptrace_wrap.h"
@@ -65,7 +62,6 @@ init_main (pid_t pid, Elf_Addr *main_start)
 {
     int found=0;
     long old_opcode, eip;
-    struct user_regs_struct child_regs;
     unsigned char tmp_opcode[8];
 
     // set breakpoint @ start of main() prologue
@@ -147,6 +143,7 @@ create_toolbox (pid_t pid)
 
     printf ("  * tbox->start : 0x%lx\n", (unsigned long)tbox->start);
     printf ("  * tbox->end   : 0x%lx\n", (unsigned long)tbox->end);
+    printf ("  * tbox->prj   : 0x%lx\n", (unsigned long)tbox->set_project);
     
     return tbox;
 }
@@ -160,8 +157,8 @@ main (int argc, char* argv[], char* envp[])
     int i, iter, correctly_invoked = 0, tuning = 1;
     Elf_Addr main_start, main_len, ret_addr;
     struct toolbox* tbox;
-    struct code_injection *inj_start, *inj_end;
-    struct user_regs_struct child_regs;
+    struct code_injection *inj_start, *inj_end,
+                          *inj_set_project, *inj_set_plan;
     char old_opcode;
     char child_parms[259];
 
@@ -200,8 +197,13 @@ main (int argc, char* argv[], char* envp[])
     tbox = create_toolbox (pid);
 
     // build the injections
-    inj_start = inject_build_start (tbox->start);
-    inj_end   = inject_build_end   (tbox->end);
+    inj_start       = inject_build_start   (tbox->start);
+    inj_end         = inject_build_end     (tbox->end);
+    inj_set_project = inject_build_prjpln  (tbox->set_project, "fossa");
+    inj_set_plan    = inject_build_prjpln  (tbox->set_plan, "test");
+
+    inject (pid, main_start, inj_set_project);
+    inject (pid, main_start, inj_set_plan);
 
     iter=0;
     while (tuning) {

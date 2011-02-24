@@ -36,10 +36,13 @@ inject_build_start (Elf_Addr addr);
 struct code_injection*
 inject_build_end (Elf_Addr addr);
 
-void
-inject_destroy (struct code_injection* inj);
+struct code_injection*
+inject_build_prjpln (Elf_Addr addr, char* name);
 
 int
 inject (pid_t pid, Elf_Addr addr, struct code_injection* inject);
+
+void
+inject_destroy (struct code_injection* inj);
 
 #endif /* #ifndef _inject_h_ */

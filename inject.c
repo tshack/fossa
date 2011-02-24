@@ -161,6 +161,61 @@ inject_destroy (struct code_injection* inj)
 }
 
 
+// cuzmem_set_project () and cuzmem_set_plan() share the
+// exact same calling convention, so we can resuse this
+// for both
+struct code_injection*
+inject_build_prjpln (Elf_Addr addr, char* name)
+{
+    struct code_injection *inject;
+    unsigned int str_len = strlen (name)+1;
+
+    inject = malloc (sizeof (struct code_injection));
+
+    inject->returns = 0;        /* does injection return a value? */
+#if _arch_i386_                 /****** i386 CODE ATTRIBUTES ******/
+    inject->length = 14;        /* length of injection code       */
+    inject->pidx = 7;           /* patch index (for call address) */
+    inject->nsparms = 1;        /* # of stack parameters          */
+#elif _arch_x86_64_             /******* x64 CODE ATTRIBUTES ******/
+    inject->length = 0;         /* length of injection code       */
+    inject->pidx = 0;           /* patch index (for call address) */
+    inject->nsparms = 0;        /* # of stack parameters          */
+#endif                          /**********************************/
+
+    // leave room to tack the string onto the end of the machine code
+    inject->size = (inject->length + str_len) * sizeof (unsigned char);
+    inject->code = malloc (inject->size);
+
+    // NOTE: in inject() I pass the program counter into eax/rax in
+    //       order to make this simple
+#if _arch_i386_
+    memcpy (inject->code, 
+        "\x8d\x40\x0e"                  /* lea    0x0e(%eax), %eax    */
+        "\x89\x04\x24"                  /* mov    %eax, (%esp)        */
+        "\xbb\x78\x56\x34\x12"          /* mov    $0x12345678, %ebx   */
+        "\xff\xd3"                      /* call   *%ebx               */
+        "\xcc",                         /* int3                       */
+        inject->size
+    );
+#elif _arch_x86_64_
+    // TODO: x86-64 injection for cuzmem_project()
+#endif
+
+    patch_addr (inject->code + inject->pidx, addr);
+
+    // because the function takes a string pointer, we need
+    // to store the string somewhere... how about just after
+    // the int3 opcode, eh?  :-)
+    memcpy (inject->code + inject->length, name, str_len);
+    inject->length += str_len;
+
+    return inject;
+}
+
+
+
+
 int
 inject (pid_t pid, Elf_Addr addr, struct code_injection* inject)
 {
@@ -195,6 +250,11 @@ inject (pid_t pid, Elf_Addr addr, struct code_injection* inject)
     printf ("Backed up:\n");
     dbg_print_mem (pid, addr, inject->length);
 #endif
+
+    // i tend to hide data at the end of injections
+    // so, let's pass the program counter into eax
+    // to make relative addressing easier
+    pt_set_eax (pid, pt_get_eip (pid));
 
     // inject
     pt_poke (pid, addr, inject->code, inject->length);

@@ -277,6 +277,22 @@ pt_get_eip (pid_t pid)
 
 }
 
+void
+pt_set_eax (pid_t pid, Elf_Addr addr)
+{
+    struct user_regs_struct regs;
+
+    ptrace (PTRACE_GETREGS, pid, NULL, &regs);
+    
+#if _arch_i386_
+    regs.eax = addr;
+#elif _arch_x86_64_
+    regs.rax = addr;
+#endif
+
+    ptrace (PTRACE_SETREGS, pid, NULL, &regs);
+}
+
 long
 pt_get_instruction (pid_t pid)
 {
