@@ -77,6 +77,7 @@ pt_continue (pid_t pid)
 
     // block until child is stopped
     do {
+#if 0
         // because our we are asking the child to do some pretty outrageous
         // memory acrobatics, there is a good chance on low memory systems that
         // the OOM will kill the child process if its "badness score" gets high
@@ -89,6 +90,7 @@ pt_continue (pid_t pid)
                 exit (1);
             }
         }
+#endif
         ptrace (PTRACE_GETREGS, pid, NULL, &regs) ;
     } while
 #if _arch_i386_

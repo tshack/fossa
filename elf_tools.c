@@ -32,12 +32,12 @@ elf_load (char* elf_file)
     
     fd_elf = open (elf_file, O_RDONLY);
     if (fd_elf == -1) {
-        fprintf (stderr, "Could not open %s: %s\n", elf_file, strerror(errno));
+        fprintf (stderr, "Could not open %s: %i\n", elf_file, strerror(errno));
         exit (1);
     }
 
     if (fstat (fd_elf, &elf_stat) == -1) {
-        fprintf (stderr, "Could not stat %s: %s\n", elf_file, strerror(errno));
+        fprintf (stderr, "Could not stat %s: %i\n", elf_file, strerror(errno));
         exit (1);
     }
 
@@ -49,7 +49,7 @@ elf_load (char* elf_file)
     }
 
     if (read (fd_elf, elf_img, elf_stat.st_size) != elf_stat.st_size) {
-        fprintf (stderr, "Error while copying file into memory: %s\n", strerror(errno));
+        fprintf (stderr, "Error while copying file into memory: %i\n", strerror(errno));
         free (elf_img);
         close (fd_elf);
         exit (1);
@@ -62,7 +62,7 @@ elf_load (char* elf_file)
 
 
 void
-elf_get_func (char* elf_file, const char *func_name, long int *func_start, long int *func_len)
+elf_get_func (char* elf_file, const char *func_name, Elf_Addr *func_start, Elf_Addr *func_len)
 {
     int i;
     u_char* base = NULL;

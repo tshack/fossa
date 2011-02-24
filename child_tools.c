@@ -41,7 +41,7 @@ file_from_path (char* full_path)
 
 
 pid_t
-child_fork (char* prg, char* parms)
+child_fork (char* prg, char** parms)
 {
 	char *path = prg;
     char *name = strrchr(path, '/');
@@ -195,7 +195,7 @@ child_get_lib (pid_t pid, struct link_map *entry)
 // Get the address of a symbol within a library that
 // exists in the linkmap.
 unsigned long
-child_get_sym ( int pid, char* sym_name, struct lib_map* lib)
+child_get_sym (pid_t pid, char* sym_name, struct lib_map* lib)
 {
     int i;
     char *str;
@@ -272,7 +272,7 @@ child_search_linkmap (pid_t pid, char *lib_name)
 // Given a symbol *name* and library *name*, this function
 // will return the virtual address of the desired symbol
 unsigned long
-child_dlsym (int pid, char *sym_name, char *lib_name)
+child_dlsym (pid_t pid, char *sym_name, char *lib_name)
 {
     struct link_map *entry;
     struct lib_map* lib;
