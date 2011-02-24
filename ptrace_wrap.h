@@ -19,6 +19,7 @@
 #define _ptrace_wrap_h_
 
 #include "fossa.h"
+#include <sys/user.h>
 
 void
 pt_attach (pid_t pid);
@@ -64,6 +65,9 @@ pt_set_eip (pid_t pid, Elf_Addr addr);
 
 long
 pt_get_eip (pid_t pid);
+
+void
+pt_set_eax (pid_t pid, Elf_Addr addr);
 
 long
 pt_get_instruction (pid_t pid);
