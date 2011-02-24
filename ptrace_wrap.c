@@ -221,18 +221,11 @@ pt_set_breakpoint (pid_t pid, Elf_Addr addr)
 void
 pt_rm_breakpoint (pid_t pid, long old_opcode)
 {
-    struct user_regs_struct child_regs;
+    long eip;
 
     pt_rewind_eip (pid, 1);
-    pt_get_regs (pid, &child_regs);
-#if _arch_i386_
-    pt_poke (pid, child_regs.eip, &old_opcode, 1);
-    fprintf (stderr, "Paused child @ main() [0x%lx]\n", child_regs.eip);
-#elif _arch_x86_64_
-    pt_poke (pid, child_regs.rip, &old_opcode, 1);
-    fprintf (stderr, "Paused child @ main() [0x%lx]\n", child_regs.rip);
-#endif
-
+    eip = pt_get_eip (pid);
+    ptrace (PTRACE_POKETEXT, pid, eip, old_opcode);
 }
 
 void
@@ -280,4 +273,15 @@ pt_get_eip (pid_t pid)
     return regs.rip;
 #endif
 
+}
+
+long
+pt_get_instruction (pid_t pid)
+{
+    long eip = pt_get_eip (pid);
+    long inst;
+
+    pt_peek (pid, eip, &inst, 1);
+
+    return inst;
 }
