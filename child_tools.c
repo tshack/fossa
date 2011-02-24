@@ -79,11 +79,11 @@ child_fork (char* prg, char** parms)
 Elf_Addr
 child_get_got (pid_t pid)
 {
-    Elf_Ehdr      *ehdr   = malloc(sizeof(Elf_Ehdr));
-    Elf_Phdr      *phdr   = malloc(sizeof(Elf_Phdr));
-    Elf_Dyn       *dyn    = malloc(sizeof(Elf_Dyn));
-    Elf_Word      got;
-    Elf_Addr      phdr_addr, dyn_addr;
+    Elf_Ehdr *ehdr = malloc(sizeof(Elf_Ehdr));
+    Elf_Phdr *phdr = malloc(sizeof(Elf_Phdr));
+    Elf_Dyn  *dyn  = malloc(sizeof(Elf_Dyn));
+    Elf_Word got;
+    Elf_Addr phdr_addr, dyn_addr;
 
     // The ELF header starts at the beginning of .text, which
     // is always located at 0x08048000 on 32-bit x86 systems

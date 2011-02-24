@@ -77,12 +77,12 @@ pt_continue (pid_t pid)
 
     // block until child is stopped
     do {
-#if 0
         // because our we are asking the child to do some pretty outrageous
         // memory acrobatics, there is a good chance on low memory systems that
         // the OOM will kill the child process if its "badness score" gets high
         // enough.  so, we should check for that...
         waitpid (pid, &s, WNOHANG);
+#if 0
         if ( WIFSIGNALED (s) ) {
             if ( WTERMSIG (s) == 9 ) {
                 fprintf (stderr, "CRITICAL FAILURE: child process received SIGKILL\n");
