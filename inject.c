@@ -214,6 +214,59 @@ inject_build_prjpln (Elf_Addr addr, char* name)
 }
 
 
+struct code_injection*
+inject_build_checkplan (Elf_Addr addr, char* proj, char* plan)
+{
+    struct code_injection *inject;
+    unsigned int proj_len = strlen (proj)+1;
+    unsigned int plan_len = strlen (plan)+1;
+    unsigned int str_len = proj_len + plan_len;
+
+    inject = malloc (sizeof (struct code_injection));
+
+    inject->returns = 1;        /* does injection return a value? */
+#if _arch_i386_                 /****** i386 CODE ATTRIBUTES ******/
+    inject->length = 21;        /* length of injection code       */
+    inject->pidx = 14;          /* patch index (for call address) */
+    inject->nsparms = 2;        /* # of stack parameters          */
+#elif _arch_x86_64_             /******* x64 CODE ATTRIBUTES ******/
+    inject->length = 0;         /* length of injection code       */
+    inject->pidx = 0;           /* patch index (for call address) */
+    inject->nsparms = 0;        /* # of stack parameters          */
+#endif                          /**********************************/
+
+    // leave room to tack the string onto the end of the machine code
+    inject->size = (inject->length + str_len) * sizeof (unsigned char);
+    inject->code = malloc (inject->size);
+
+    // NOTE: in inject() I pass the program counter into eax/rax in
+    //       order to make this simple
+#if _arch_i386_
+    memcpy (inject->code, 
+        "\x8d\x58\x15"                  /* lea    0x21(%eax), %ebx    */
+        "\x8d\x40\xff"                  /* lea    0xff(%eax), %eax    */
+        "\x89\x1c\x24"                  /* mov    %ebx, (%esp)        */
+        "\x89\x44\x24\x04"              /* mov    %eax, 0x4(%esp)     */
+        "\xbb\x78\x56\x34\x12"          /* mov    $0x12345678, %ebx   */
+        "\xff\xd3"                      /* call   *%ebx               */
+        "\xcc",                         /* int3                       */
+        inject->size
+    );
+#elif _arch_x86_64_
+    // TODO: x86-64 injection for cuzmem_project()
+#endif
+
+    patch_addr (inject->code + inject->pidx, addr);
+    *(inject->code + 5) = inject->length + proj_len;
+
+    // tack strings onto end of machine code, project first
+    memcpy (inject->code + inject->length, proj, proj_len);
+    inject->length += proj_len;
+    memcpy (inject->code + inject->length, plan, plan_len);
+    inject->length += plan_len;
+
+    return inject;
+}
 
 
 int
