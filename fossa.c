@@ -45,28 +45,18 @@ struct toolbox {
 void
 dbg_step_print (pid_t pid, int i)
 {
-    long old_eip;    
+    long old_eip, eip;
     unsigned char opcode;
     struct user_regs_struct child_regs;
 
     printf ("Single-Stepping child.\n");
     for (i=0; i<20; i++) {
-#if _arch_i386_
-        old_eip = child_regs.eip;
-#elif _arch_x86_64_
-        old_eip = child_regs.rip;
-#endif
+        old_eip = pt_get_eip (pid);
         pt_singlestep (pid);
-        pt_get_regs (pid, &child_regs);
-#if _arch_i386_
-        pt_peek (pid, child_regs.eip, &opcode, 1);
-        fprintf (stderr, "0x%08x: %02x\n", child_regs.eip, opcode);
-//        fprintf (stderr, "0x%08x\n", child_regs.eip);
-#elif _arch_x86_64_
-        pt_peek (pid, child_regs.rip, &opcode, 1);
-        fprintf (stderr, "0x%08x: %lx\n", child_regs.rip, opcode);
-//        fprintf (stderr, "0x%08x\n", child_regs.rip);
-#endif
+        eip = pt_get_eip (pid);
+        pt_peek (pid, eip, &opcode, 1);
+        fprintf (stderr, "0x%08x: %lx\n", eip, opcode);
+//        fprintf (stderr, "0x%08x\n", eip);
     }
 
 }
@@ -81,6 +71,7 @@ dbg_step_print (pid_t pid, int i)
 long
 init_child (pid_t pid, Elf_Addr *main_start, Elf_Addr *main_len)
 {
+    long eip;
     int status, found = 0;
     unsigned int pushes = 0;
     long old_opcode_s, old_opcode_e;
@@ -105,12 +96,8 @@ init_child (pid_t pid, Elf_Addr *main_start, Elf_Addr *main_len)
     // now single step until we find what (at least) "looks like"
     // the end of the main() function prologue
     while (!found) {
-        pt_get_regs (pid, &child_regs);
-#if _arch_i386_
-        pt_peek (pid, child_regs.eip, tmp_opcode, 1);
-#elif _arch_x86_64_
-        pt_peek (pid, child_regs.rip, tmp_opcode, 1);
-#endif
+        eip = pt_get_eip (pid);
+        pt_peek (pid, eip, tmp_opcode, 1);
 
         // count pushes.  we can make a good guess of where the
         // main() epilogue starts based on the number of pushes
@@ -126,17 +113,11 @@ init_child (pid_t pid, Elf_Addr *main_start, Elf_Addr *main_len)
             tmp_opcode[2] == 0xec)
         {
            pt_singlestep (pid);
-            pt_get_regs (pid, &child_regs);
-#if _arch_i386_
-            fprintf (stderr, "main() prologue ends @ 0x%lx\n", child_regs.eip);
-            *main_len -= (child_regs.eip - *main_start) + 1;
-            *main_start = child_regs.eip;
-#elif _arch_x86_64_
-            fprintf (stderr, "main() prologue ends @ 0x%lx\n", child_regs.rip);
-            *main_len -= (child_regs.rip - *main_start) + 1;
-            *main_start = child_regs.rip;
-#endif
-            found = 1;
+           eip = pt_get_eip (pid);
+           fprintf (stderr, "main() prologue ends @ 0x%lx\n", eip);
+           *main_len -= (eip - *main_start) + 1;
+           *main_start = eip;
+           found = 1;
         } else {
             pt_singlestep (pid);
         }
@@ -222,6 +203,7 @@ int
 main (int argc, char* argv[], char* envp[])
 {
     pid_t pid;
+    long eip;
     int i, correctly_invoked = 0, tuning = 1;
     long int main_start, main_len;
     struct toolbox* tbox;
@@ -297,12 +279,8 @@ main (int argc, char* argv[], char* envp[])
             pt_set_eip (pid, main_start + main_len);
 
             // restore the last instruction in main()
-            pt_get_regs (pid, &child_regs);
-#if _arch_i386_
-            pt_poke (pid, child_regs.eip, &old_opcode, 1);
-#elif _arch_x86_64_
-            pt_poke (pid, child_regs.rip, &old_opcode, 1);
-#endif
+            eip = pt_get_eip (pid);
+            pt_poke (pid, eip, &old_opcode, 1);
 
             // let main() return
             pt_continue (pid);
