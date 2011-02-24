@@ -175,16 +175,16 @@ pt_singlestep (pid_t pid)
         exit (1);
     }
 
-#if 0
+    // block until child is stopped
     do {
-        ptrace (PTRACE_GETREGS, pid, &regs, 0) ;
-    } while (ptrace(PTRACE_PEEKDATA, pid, regs.rip, 0) == -1);
+        ptrace (PTRACE_GETREGS, pid, NULL, &regs) ;
+    } while
+#if _arch_i386_
+        ( ptrace (PTRACE_PEEKDATA, pid, regs.eip, NULL) == -1 );
+#elif _arch_x86_64_
+        ( ptrace (PTRACE_PEEKDATA, pid, regs.rip, NULL) == -1 );
 #endif
 
-    // block until child is stopped
-    while ( !WIFSTOPPED (s) && !WIFEXITED (s) ) {
-        waitpid (pid, &s, WNOHANG);
-    }
 }
 
 void
@@ -216,6 +216,23 @@ pt_set_breakpoint (pid_t pid, Elf_Addr addr)
     ptrace (PTRACE_POKETEXT, pid, addr, 0xcc);
 
     return word;
+}
+
+void
+pt_rm_breakpoint (pid_t pid, long old_opcode)
+{
+    struct user_regs_struct child_regs;
+
+    pt_rewind_eip (pid, 1);
+    pt_get_regs (pid, &child_regs);
+#if _arch_i386_
+    pt_poke (pid, child_regs.eip, &old_opcode, 1);
+    fprintf (stderr, "Paused child @ main() [0x%lx]\n", child_regs.eip);
+#elif _arch_x86_64_
+    pt_poke (pid, child_regs.rip, &old_opcode, 1);
+    fprintf (stderr, "Paused child @ main() [0x%lx]\n", child_regs.rip);
+#endif
+
 }
 
 void
