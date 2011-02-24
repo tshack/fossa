@@ -24,6 +24,6 @@ u_char*
 elf_load (char* elf_file);
 
 void
-elf_get_func (char* elf_file, const char *func_name, long int *func_start, long int *func_len);
+elf_get_func (char* elf_file, const char *func_name, Elf_Addr *func_start, Elf_Addr *func_len);
 
 #endif /*#ifndef _elf_tools_h_ */

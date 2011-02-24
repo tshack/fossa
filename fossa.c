@@ -100,6 +100,7 @@ step_till_ret (pid_t pid)
         inst = pt_get_instruction (pid);
         opcode = (unsigned char)inst;
 //        fprintf (stderr, "%lx: %lx\n", eip, opcode);
+//        sleep (1);
 
         // next opcode is call (don't step into, step over)
         // the call instruction is 5 bytes
@@ -148,8 +149,8 @@ create_toolbox (pid_t pid)
 
     printf ("success.\n");
 
-    printf ("  * tbox->start : 0x%lx\n", tbox->start);
-    printf ("  * tbox->end   : 0x%lx\n", tbox->end);
+    printf ("  * tbox->start : 0x%lx\n", (unsigned long)tbox->start);
+    printf ("  * tbox->end   : 0x%lx\n", (unsigned long)tbox->end);
     
     return tbox;
 }
@@ -161,7 +162,7 @@ main (int argc, char* argv[], char* envp[])
     pid_t pid;
     long eip;
     int i, iter, correctly_invoked = 0, tuning = 1;
-    long int main_start, main_len, ret_addr;
+    Elf_Addr main_start, main_len, ret_addr;
     struct toolbox* tbox;
     struct code_injection *inj_start, *inj_end;
     struct user_regs_struct child_regs;
