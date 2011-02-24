@@ -39,6 +39,9 @@ inject_build_end (Elf_Addr addr);
 struct code_injection*
 inject_build_prjpln (Elf_Addr addr, char* name);
 
+struct code_injection*
+inject_build_checkplan (Elf_Addr addr, char* proj, char* plan);
+
 int
 inject (pid_t pid, Elf_Addr addr, struct code_injection* inject);
 

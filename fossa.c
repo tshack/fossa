@@ -158,7 +158,8 @@ main (int argc, char* argv[], char* envp[])
     Elf_Addr main_start, main_len, ret_addr;
     struct toolbox* tbox;
     struct code_injection *inj_start, *inj_end,
-                          *inj_set_project, *inj_set_plan;
+                          *inj_set_project, *inj_set_plan,
+                          *inj_check_plan;
     char old_opcode;
     char child_parms[259];
 
@@ -197,13 +198,15 @@ main (int argc, char* argv[], char* envp[])
     tbox = create_toolbox (pid);
 
     // build the injections
-    inj_start       = inject_build_start   (tbox->start);
-    inj_end         = inject_build_end     (tbox->end);
-    inj_set_project = inject_build_prjpln  (tbox->set_project, "fossa");
-    inj_set_plan    = inject_build_prjpln  (tbox->set_plan, "test");
+    inj_start       = inject_build_start     (tbox->start);
+    inj_end         = inject_build_end       (tbox->end);
+    inj_check_plan  = inject_build_checkplan (tbox->check_plan, "fossa", "test");
+    inj_set_project = inject_build_prjpln    (tbox->set_project, "fossa");
+    inj_set_plan    = inject_build_prjpln    (tbox->set_plan, "test");
 
     inject (pid, main_start, inj_set_project);
     inject (pid, main_start, inj_set_plan);
+//    inject (pid, main_start, inj_check_plan);
 
     iter=0;
     while (tuning) {
