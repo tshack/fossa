@@ -220,6 +220,9 @@ inject (pid_t pid, Elf_Addr addr, struct code_injection* inject)
         pt_get_regs (pid, &tmp_regs);
         ret = (int)tmp_regs.rax;
 #endif
+#if defined (DEBUG)
+        fprintf (stderr, "Injection Returned: %i\n\n", ret);
+#endif
     }
 
     // restore registers

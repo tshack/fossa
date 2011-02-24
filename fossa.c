@@ -28,8 +28,6 @@
 #include "child_tools.h"
 #include "inject.h"
 
-// ref: http://tldp.org/LDP/LG/issue85/sandeep.html
-
 //#define DEBUG
 
 struct toolbox {
@@ -45,17 +43,15 @@ struct toolbox {
 void
 dbg_step_print (pid_t pid, int i)
 {
-    long old_eip, eip;
+    long eip;
     unsigned char opcode;
-    struct user_regs_struct child_regs;
 
     printf ("Single-Stepping child.\n");
     for (i=0; i<20; i++) {
-        old_eip = pt_get_eip (pid);
-        pt_singlestep (pid);
         eip = pt_get_eip (pid);
         pt_peek (pid, eip, &opcode, 1);
-        fprintf (stderr, "0x%08x: %lx\n", eip, opcode);
+        fprintf (stderr, "0x%08x: %lx\n", (unsigned int)eip, (unsigned long)opcode);
+        pt_singlestep (pid);
 //        fprintf (stderr, "0x%08x\n", eip);
     }
 
@@ -81,7 +77,7 @@ init_main (pid_t pid, Elf_Addr *main_start)
     // remove the breakpoint
     pt_rm_breakpoint (pid, old_opcode);
 
-    (*main_start)++;
+//    (*main_start)++;
 }
 
 
@@ -236,10 +232,10 @@ main (int argc, char* argv[], char* envp[])
             // remove the int3 @ the end of main()
             printf ("Tuning Complete\n");
 
-            // jump back to the end
-            pt_set_eip (pid, ret_addr);
+            // jump back just after the breakpoint
+            pt_set_eip (pid, ret_addr+1);
 
-            // restore main() ret instruction
+            // restore main() ret instruction & rewind eip
             pt_rm_breakpoint (pid, 0xc3);
 
             // let main() return
