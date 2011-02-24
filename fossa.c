@@ -64,105 +64,61 @@ dbg_step_print (pid_t pid, int i)
 
 
 
-// this function sets a breakpoint @ the first opcode **inside** of main()
-// [i.e. after the function preamble] and runs the child to the breakpoint.
-// once @ the breakpoint, we replace int3 at the breakpoint with the orig
-// instruction and rewind the program counter to just before the breakpoint.
-long
-init_child (pid_t pid, Elf_Addr *main_start, Elf_Addr *main_len)
+void
+init_main (pid_t pid, Elf_Addr *main_start)
 {
-    long eip;
-    int status, found = 0;
-    unsigned int pushes = 0;
-    long old_opcode_s, old_opcode_e;
-    unsigned char tmp_opcode[8];
+    int found=0;
+    long old_opcode, eip;
     struct user_regs_struct child_regs;
-    Elf_Addr main_end;
+    unsigned char tmp_opcode[8];
 
-    printf ("Attached to child process: %d\n", pid);    
-    printf ("Found main() @ 0x%lx\n", *main_start);
-    printf ("main() length: %i\n", *main_len);
-    printf ("main() end:    %lx\n", *main_start + *main_len);
+    // set breakpoint @ start of main() prologue
+    old_opcode = pt_set_breakpoint (pid, *main_start);
 
-    // set a breakpoint @ start of main()
-    old_opcode_s = pt_set_breakpoint (pid, *main_start);
-
-    // resume the child -- run to start breakpoint
+    // run to breakpoint
     pt_continue (pid);
 
-    // remove breakpoint
-    pt_rm_breakpoint (pid, old_opcode_s);
+    // remove the breakpoint
+    pt_rm_breakpoint (pid, old_opcode);
 
-    // now single step until we find what (at least) "looks like"
-    // the end of the main() function prologue
-    while (!found) {
+    (*main_start)++;
+}
+
+
+Elf_Addr
+step_till_ret (pid_t pid)
+{
+    unsigned char opcode;
+    long inst = 0x00;
+    long old_inst;
+    long eip;
+
+    while (opcode != 0xc3) {
+        pt_singlestep (pid);
+
         eip = pt_get_eip (pid);
-        pt_peek (pid, eip, tmp_opcode, 1);
+        inst = pt_get_instruction (pid);
+        opcode = (unsigned char)inst;
+//        fprintf (stderr, "%lx: %lx\n", eip, opcode);
 
-        // count pushes.  we can make a good guess of where the
-        // main() epilogue starts based on the number of pushes
-        // found in the prologue
-        if ( (tmp_opcode[0] == 0x55) ||     /* push %ebp */
-             (tmp_opcode[0] == 0x56) ||     /* push %esi */
-             (tmp_opcode[0] == 0x53)        /* push %ebx */
-
-           ) { pushes++; }
-
-        // we are looking for a subtraction from the stack pointer
-        if (tmp_opcode[1] == 0xec ||
-            tmp_opcode[2] == 0xec)
-        {
-           pt_singlestep (pid);
-           eip = pt_get_eip (pid);
-           fprintf (stderr, "main() prologue ends @ 0x%lx\n", eip);
-           *main_len -= (eip - *main_start) + 1;
-           *main_start = eip;
-           found = 1;
-        } else {
-            pt_singlestep (pid);
+        // next opcode is call (don't step into, step over)
+        // the call instruction is 5 bytes
+        if (opcode == 0xe8) {
+//            fprintf (stderr, "stepping over\n");
+            eip = pt_get_eip (pid);
+            old_inst = pt_set_breakpoint (pid, eip + 5);
+            pt_continue (pid);
+            pt_rm_breakpoint (pid, old_inst);
         }
     }
 
-    // this is purely empirically derived...
-    if (pushes == 1) {
-        // for this case, usually only %ebp was pushed.  it seems that for
-        // this, gcc uses leave, ret for an epilogue
-        *main_len -= 1;
-    }
-#if _arch_x86_64_
-    else if (pushes == 2) {
-        *main_len -= 2;
+    // replace ret with int3
+    eip = pt_get_eip (pid);
+    pt_set_breakpoint (pid, eip);
 
-        if ( tmp_opcode[0] == 0x48 &&
-             tmp_opcode[1] == 0x81)
-        {
-            *main_len -= 7;
-        }
-    }
-#endif
-    else {
-        // gcc pushed something other can %ebp when this happens, it pops each
-        // off individually in the epilogue... it seems
-        *main_len -= (pushes + 2);
-        // length of sub opcode used to adjust stack
-        // this allows us to *infer* the length of the manditory
-        // add %esp instruction in the epilogue
-        if (tmp_opcode[0] == 0x81) {
-            *main_len -= 6;
-        }
-    }
+//    fprintf (stderr, "main() ends @ 0x%lx\n", eip);
 
-    printf ("main() length: %i\n", *main_len);
-    printf ("main() end:    %lx\n", *main_start + *main_len);
-
-    // set a breakpoint @ end of main()
-    main_end = *main_start + *main_len;
-    old_opcode_e = pt_set_breakpoint (pid, main_end);
-    printf ("Set Breakpoint @ end of main() [0x%lx]\n", main_end);
-
-    // return the old end of main() opcode so that we can
-    // exit main() later when we are finished
-    return old_opcode_e;
+    return eip;
 }
 
 
@@ -204,8 +160,8 @@ main (int argc, char* argv[], char* envp[])
 {
     pid_t pid;
     long eip;
-    int i, correctly_invoked = 0, tuning = 1;
-    long int main_start, main_len;
+    int i, iter, correctly_invoked = 0, tuning = 1;
+    long int main_start, main_len, ret_addr;
     struct toolbox* tbox;
     struct code_injection *inj_start, *inj_end;
     struct user_regs_struct child_regs;
@@ -243,16 +199,16 @@ main (int argc, char* argv[], char* envp[])
     // initialization
     elf_get_func (argv[1], "main", &main_start, &main_len);
     pid = child_fork (argv[1], &argv[1]);
-    old_opcode = init_child (pid, &main_start, &main_len);
+    init_main (pid, &main_start);
     tbox = create_toolbox (pid);
 
     // build the injections
     inj_start = inject_build_start (tbox->start);
     inj_end   = inject_build_end   (tbox->end);
 
-    i=0;
+    iter=0;
     while (tuning) {
-        printf ("Tuning Iteration: %i\n", i++);
+        printf ("Tuning Iteration: %i\n", iter);
 
         // inject the start()
         inject (pid, main_start, inj_start);
@@ -260,7 +216,11 @@ main (int argc, char* argv[], char* envp[])
         // resume the child
         // it will run until it hits the int3 @ end of main()
 //        fprintf (stderr, "Resuming child.\n");
-        pt_continue (pid);
+        if (iter == 0) {
+            ret_addr = step_till_ret (pid);
+        } else {
+            pt_continue (pid);
+        }
 
         // hit int3 @ end of main()
         // move PC back to start of main() so that we can
@@ -276,15 +236,16 @@ main (int argc, char* argv[], char* envp[])
             printf ("Tuning Complete\n");
 
             // jump back to the end
-            pt_set_eip (pid, main_start + main_len);
+            pt_set_eip (pid, ret_addr);
 
-            // restore the last instruction in main()
-            eip = pt_get_eip (pid);
-            pt_poke (pid, eip, &old_opcode, 1);
+            // restore main() ret instruction
+            pt_rm_breakpoint (pid, 0xc3);
 
             // let main() return
             pt_continue (pid);
         }
+
+        iter++;
     }
 
 
