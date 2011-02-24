@@ -62,4 +62,7 @@ pt_rewind_eip (pid_t pid, int i);
 void
 pt_set_eip (pid_t pid, Elf_Addr addr);
 
+long
+pt_get_eip (pid_t pid);
+
 #endif /* #ifndef _ptrace_wrap_h_ */

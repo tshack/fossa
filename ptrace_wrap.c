@@ -266,3 +266,18 @@ pt_set_eip (pid_t pid, Elf_Addr addr)
 
     ptrace (PTRACE_SETREGS, pid, NULL, &regs);
 }
+
+long
+pt_get_eip (pid_t pid)
+{
+    struct user_regs_struct regs;
+
+    ptrace (PTRACE_GETREGS, pid, NULL, &regs);
+    
+#if _arch_i386_
+    return regs.eip;
+#elif _arch_x86_64_
+    return regs.rip;
+#endif
+
+}
