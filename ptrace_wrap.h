@@ -54,6 +54,9 @@ long
 pt_set_breakpoint (pid_t pid, Elf_Addr addr);
 
 void
+pt_rm_breakpoint (pid_t pid, long old_opcode);
+
+void
 pt_rewind_eip (pid_t pid, int i);
 
 void

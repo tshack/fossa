@@ -100,15 +100,7 @@ init_child (pid_t pid, Elf_Addr *main_start, Elf_Addr *main_len)
     pt_continue (pid);
 
     // remove breakpoint
-    pt_rewind_eip (pid, 1);
-    pt_get_regs (pid, &child_regs);
-#if _arch_i386_
-    pt_poke (pid, child_regs.eip, &old_opcode_s, 1);
-    fprintf (stderr, "Paused child @ main() [0x%lx]\n", child_regs.eip);
-#elif _arch_x86_64_
-    pt_poke (pid, child_regs.rip, &old_opcode_s, 1);
-    fprintf (stderr, "Paused child @ main() [0x%lx]\n", child_regs.rip);
-#endif
+    pt_rm_breakpoint (pid, old_opcode_s);
 
     // now single step until we find what (at least) "looks like"
     // the end of the main() function prologue
