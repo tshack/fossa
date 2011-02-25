@@ -178,8 +178,8 @@ inject_build_prjpln (Elf_Addr addr, char* name)
     inject->pidx = 7;           /* patch index (for call address) */
     inject->nsparms = 1;        /* # of stack parameters          */
 #elif _arch_x86_64_             /******* x64 CODE ATTRIBUTES ******/
-    inject->length = 0;         /* length of injection code       */
-    inject->pidx = 0;           /* patch index (for call address) */
+    inject->length = 17;        /* length of injection code       */
+    inject->pidx = 6;           /* patch index (for call address) */
     inject->nsparms = 0;        /* # of stack parameters          */
 #endif                          /**********************************/
 
@@ -199,7 +199,15 @@ inject_build_prjpln (Elf_Addr addr, char* name)
         inject->size
     );
 #elif _arch_x86_64_
-    // TODO: x86-64 injection for cuzmem_project()
+    memcpy (inject->code, 
+        "\x48\x8d\x78\x12"              /* lea 0x11(%rax), %rdi          */
+        "\x48\xb8"                      /* mov $0x1234567812345678, %rax */
+        "\x78\x56\x34\x12"
+        "\x78\x56\x34\x12"
+        "\xff\xd0"                      /* callq  *%rax                  */
+        "\xcc",                         /* int3                          */
+        inject->size
+    );
 #endif
 
     patch_addr (inject->code + inject->pidx, addr);
@@ -230,8 +238,8 @@ inject_build_checkplan (Elf_Addr addr, char* proj, char* plan)
     inject->pidx = 14;          /* patch index (for call address) */
     inject->nsparms = 2;        /* # of stack parameters          */
 #elif _arch_x86_64_             /******* x64 CODE ATTRIBUTES ******/
-    inject->length = 0;         /* length of injection code       */
-    inject->pidx = 0;           /* patch index (for call address) */
+    inject->length = 21;        /* length of injection code       */
+    inject->pidx = 10;          /* patch index (for call address) */
     inject->nsparms = 0;        /* # of stack parameters          */
 #endif                          /**********************************/
 
@@ -252,12 +260,22 @@ inject_build_checkplan (Elf_Addr addr, char* proj, char* plan)
         "\xcc",                         /* int3                       */
         inject->size
     );
+    *(inject->code + 5) = inject->length + proj_len;
 #elif _arch_x86_64_
-    // TODO: x86-64 injection for cuzmem_project()
+    memcpy (inject->code, 
+        "\x48\x8d\x78\x16"              /* lea 0x16(%rax), %rdi          */
+        "\x48\x8d\x70\xff"              /* lea 0xff(%rax), %rsi          */
+        "\x48\xb8"                      /* mov $0x1234567812345678, %rax */
+        "\x78\x56\x34\x12"
+        "\x78\x56\x34\x12"
+        "\xff\xd0"                      /* callq  *%rax                  */
+        "\xcc",                         /* int3                          */
+        inject->size
+    );
+    *(inject->code + 7) = inject->length + proj_len;
 #endif
 
     patch_addr (inject->code + inject->pidx, addr);
-    *(inject->code + 5) = inject->length + proj_len;
 
     // tack strings onto end of machine code, project first
     memcpy (inject->code + inject->length, proj, proj_len);
