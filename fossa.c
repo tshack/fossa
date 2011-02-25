@@ -64,6 +64,34 @@ dbg_step_print (pid_t pid, int i)
 #endif
 
 
+void
+set_mode (struct fossa_options* opt, int planless)
+{
+    // NOTE
+    // planless = 0     ( a plan exists)
+    // planless = 1     (no plan exists)
+    // opt->mode = 0    (CUZMEM_RUN)
+    // opt->mode = 1    (CUZMEM_TUNE)
+
+    // no plan and run mode?  no sir!
+    if (planless && (opt->mode == 0)) {
+        fprintf (stderr, "\n"
+            "There is no plan for the specified program.\n"
+            "Please run fossa in tune mode with the -m option\n\n"
+        );
+        print_usage ();
+    }
+    // we want to tune and we already have a plan
+    else if (!planless && (opt->mode == 1)) {
+        opt->mode = 1;
+    }
+    // are planless, want to tune?  ok
+    // not planless, want to run? ok, same thing
+    else {
+        opt->mode = planless;
+    }
+}
+
 
 void
 init_main (pid_t pid, Elf_Addr *main_start)
@@ -210,22 +238,12 @@ main (int argc, char* argv[], char* envp[])
     // setup project directory for this child program
     sprintf (project, "fossa/%s", strrchr(opt.child_prg, '/')+1);
 
-    // we need the check plan injection 1st
+    // launch check_plan injection to see if this program has a plan
     inj_check_plan  = inject_build_checkplan (tbox->check_plan, project, plan_hash);
     planless = inject (pid, main_start, inj_check_plan);
 
-    // no plan and run mode?  no sir!
-    if (planless && (opt.mode == 0)) {
-        fprintf (stderr, "\n"
-            "There is no plan for the specified program.\n"
-            "Please run fossa in tune mode with the -m option\n\n"
-        );
-        print_usage ();
-    } else if (!planless && (opt.mode == 1)) {
-        opt.mode = 1;
-    } else {
-        opt.mode = planless;
-    }
+    // adjust the operation mode based on plan status
+    set_mode (&opt, planless);
 
     // build the rest of the injections
     inj_start       = inject_build_start     (tbox->start, opt.mode);
@@ -240,7 +258,10 @@ main (int argc, char* argv[], char* envp[])
 
     iter=0;
     while (tuning) {
-        printf ("Tuning Iteration: %i\n", iter);
+        if (opt.mode == 1) {
+            printf ("fossa: Tuning Iteration: %03i\n", iter);
+            printf ("----------------------------\n", iter);
+        }
 
         // inject the start()
         inject (pid, main_start, inj_start);
@@ -264,7 +285,9 @@ main (int argc, char* argv[], char* envp[])
         if (!tuning) {
             // we are done.
             // remove the int3 @ the end of main()
-            printf ("Tuning Complete\n");
+            if (opt.mode == 1) {
+                printf ("Tuning Complete\n");
+            }
 
             // jump back just after the breakpoint
             pt_set_eip (pid, ret_addr+1);
