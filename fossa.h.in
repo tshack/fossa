@@ -20,6 +20,8 @@
 
 #include <elf.h>
 
+#define SVN_REV "@SVN_REV@"
+
 #cmakedefine _arch_i386_ 1
 #cmakedefine _arch_x86_64_ 1
 
