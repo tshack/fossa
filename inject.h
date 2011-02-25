@@ -42,6 +42,9 @@ inject_build_prjpln (Elf_Addr addr, char* name);
 struct code_injection*
 inject_build_checkplan (Elf_Addr addr, char* proj, char* plan);
 
+struct code_injection*
+inject_build_settuner (Elf_Addr addr, unsigned int tuner);
+
 int
 inject (pid_t pid, Elf_Addr addr, struct code_injection* inject);
 
