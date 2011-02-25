@@ -105,8 +105,13 @@ elf_get_func (char* elf_file, const char *func_name, Elf_Addr *func_start, Elf_A
 #endif
                     sym_name = (base + shdr[shdr[i].sh_link].sh_offset) + sym->st_name;
                     if (!strcmp (func_name, sym_name)) {
-                        *func_start = sym->st_value;
-                        *func_len   = sym->st_size;
+                        if (func_start != NULL) {
+                            *func_start = sym->st_value;
+                        }
+
+                        if (func_len != NULL) {
+                            *func_len   = sym->st_size;
+                        }
 
                         free (base);
                         return;

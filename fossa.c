@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include "fossa.h"
+#include "options.h"
 #include "ptrace_wrap.h"
 #include "elf_tools.h"
 #include "child_tools.h"
@@ -178,28 +179,14 @@ int
 main (int argc, char* argv[], char* envp[])
 {
     pid_t pid;
-    long eip;
-    int i, iter, correctly_invoked = 0, tuning = 1;
-    Elf_Addr main_start, main_len, ret_addr;
+    int i, iter;
+    int correctly_invoked = 0, tuning = 1;
+    Elf_Addr main_start, ret_addr;
+    struct fossa_options opt;
     struct toolbox* tbox;
     struct code_injection *inj_start, *inj_end,
                           *inj_set_project, *inj_set_plan,
                           *inj_check_plan;
-    char old_opcode;
-    char child_parms[259];
-
-
-    if (argc < 2) {
-        printf ("usage: %s program\n" , argv[0]);
-        exit (1);
-    }
-
-    strcpy (child_parms, "");
-    for (i=2; i<argc; i++) {
-        strcat (child_parms, argv[i]);
-        strcat (child_parms, " ");
-    }
-    printf ("child_parms: %s\n", child_parms);
 
     // --------------------------------------------------------------------------
     // make sure the instrumentation library was LD_PRELOADED
@@ -216,9 +203,12 @@ main (int argc, char* argv[], char* envp[])
     }
     // --------------------------------------------------------------------------
 
+    opt.mode = 1;
+
     // initialization
-    elf_get_func (argv[1], "main", &main_start, &main_len);
-    pid = child_fork (argv[1], &argv[1]);
+    parse_cmdline (&opt, argc, argv);
+    elf_get_func (opt.child_prg, "main", &main_start, NULL);
+    pid = child_fork (opt.child_prg, opt.child_argv);
     init_main (pid, &main_start);
     tbox = create_toolbox (pid);
 
@@ -242,7 +232,6 @@ main (int argc, char* argv[], char* envp[])
 
         // resume the child
         // it will run until it hits the int3 @ end of main()
-//        fprintf (stderr, "Resuming child.\n");
         if (iter == 0) {
             ret_addr = step_till_ret (pid);
         } else {
