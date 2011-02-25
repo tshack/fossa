@@ -199,9 +199,9 @@ create_toolbox (pid_t pid)
          (!tbox->check_plan) )
     {
         printf ("FAILED!\n\n");
-        pritnf ("  Please make sure libcuzmem.so (included with fossa) is in your"
+        printf ("  Please make sure libcuzmem.so (included with fossa) is in your"
                 "  library path and is locatable by ld.so\n");
-        exit (1)
+        exit (1);
     }
 
     printf ("success.\n");
