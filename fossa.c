@@ -27,6 +27,12 @@
 #include "inject.h"
 #include "hash.h"
 
+// TODO: Add for-loop detection to step_till_ret()
+//       for programmers who like to put large
+//       cuda memory initialization loops right
+//       there in main()  (cough... CUDA SDK)
+
+
 //#define DEBUG
 
 struct toolbox {

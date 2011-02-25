@@ -34,12 +34,18 @@ IF (NOT APPLE)
   ENDIF (CMAKE_SIZEOF_VOID_P EQUAL 4)
 ENDIF (NOT APPLE)
 
-CONFIGURE_FILE (
-    ${CMAKE_CURRENT_SOURCE_DIR}/fossa.h.in
-    ${CMAKE_CURRENT_BINARY_DIR}/fossa.h
-)
 INCLUDE_DIRECTORIES (BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE_DIRECTORIES (BEFORE ${CMAKE_BINARY_DIR})
+
+## FANCY SUBVERSION STUFF ##############################
+FIND_PACKAGE (SVN)
+IF (SUBVERSION_FOUND)
+    SUBVERSION_WC_INFO (${CMAKE_CURRENT_SOURCE_DIR} FOSSA)
+    SET (SVN_REV ${FOSSA_WC_REVISION})
+    MESSAGE("-- Current revision is ${SVN_REV}") 
+ENDIF (SUBVERSION_FOUND)
+########################################################
+
 
 ## LIBCUZMEM ###########################################
 ADD_SUBDIRECTORY (libcuzmem)
@@ -58,7 +64,7 @@ ADD_CUSTOM_TARGET (libcuzmem
 
 
 ## LIBGCRYPT ###########################################
-FIND_PACKAGE (libgcrypt)
+FIND_PACKAGE (libgcrypt REQUIRED)
 
 IF (LIBGCRYPT_FOUND)
     INCLUDE_DIRECTORIES (${LIBGCRYPT_INCLUDE_DIR})
@@ -66,6 +72,10 @@ IF (LIBGCRYPT_FOUND)
 ENDIF (LIBGCRYPT_FOUND)
 ########################################################
 
+CONFIGURE_FILE (
+    ${CMAKE_CURRENT_SOURCE_DIR}/fossa.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/fossa.h
+)
 
 ## BUILD TARGET SOURCE FILES ###########################
 SET ( SRC_fossa
