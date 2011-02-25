@@ -33,7 +33,7 @@ char*
 file_from_path (char* full_path);
 
 pid_t
-child_fork (char* prg, char** parms);
+child_fork (char** child_argv, char** child_envp);
 
 Elf_Addr
 child_get_got (pid_t pid);

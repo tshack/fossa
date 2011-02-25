@@ -41,17 +41,29 @@ file_from_path (char* full_path)
 
 
 pid_t
-child_fork (char* prg, char** parms)
+child_fork (char** child_argv, char** child_envp)
 {
-	char *path = prg;
-    char *name = strrchr(path, '/');
+    int i;
+    size_t envp_size;
     pid_t child_pid;
+    char **new_envp = NULL;
+    char preload[] = "LD_PRELOAD=./libcuzmem.so";
 
-    if (name) {
-        name = name + 1;        
-    } else {
-        name = path;
+    // Ugh!  There must be a better way to do this...
+    // I'm not a string library jockey.
+
+    for (i=0; child_envp[i] != NULL; i++);
+    envp_size = (i+1) * sizeof (char*); 
+    new_envp = malloc (envp_size);
+
+    for (i=0; child_envp[i] != NULL; i++) {
+        new_envp[i] = malloc (strlen (child_envp[i])*sizeof(char));
+        strcpy (new_envp[i], child_envp[i]);
     }
+
+    new_envp[i] = malloc (strlen (preload) * sizeof(char));
+    strcpy (new_envp[i], preload);
+    new_envp[i+1] = NULL;
 
     switch (child_pid = fork()) {
         case -1:
@@ -59,14 +71,12 @@ child_fork (char* prg, char** parms)
             exit (1);
         case 0: 
             pt_allow_trace ();
-//            execl (path, name, parms, (char*)NULL);
-            execv (path, parms);
-            fprintf (stderr, "CRITICAL ERROR: could not load target \"%s\"\n", prg);
+            execve (child_argv[0], child_argv, new_envp);
             exit (1);
     }
     waitpid (child_pid, NULL, 0);
 
-    // The child is stopped @ this point due to the execl() call
+    // The child is stopped @ this point due to the execv() call
     // (received SIGTRAP)
 
     return child_pid;
@@ -280,6 +290,10 @@ child_dlsym (pid_t pid, char *sym_name, char *lib_name)
 
     // search link_map for desired library name
     entry = child_search_linkmap (pid, lib_name);
+
+    if (entry == NULL) {
+        return 0;
+    }
 
     // get library info (strtab, symtab, num_syms)
     lib = child_get_lib (pid, entry);
