@@ -224,7 +224,7 @@ main (int argc, char* argv[], char* envp[])
     struct toolbox* tbox;
     struct code_injection *inj_start, *inj_end,
                           *inj_set_project, *inj_set_plan,
-                          *inj_check_plan;
+                          *inj_check_plan, *inj_set_tuner;
 
 
     // make run mode the default mode
@@ -253,11 +253,14 @@ main (int argc, char* argv[], char* envp[])
     inj_end         = inject_build_end       (tbox->end);
     inj_set_project = inject_build_prjpln    (tbox->set_project, project);
     inj_set_plan    = inject_build_prjpln    (tbox->set_plan, plan_hash);
+    inj_set_tuner   = inject_build_settuner  (tbox->set_tuner, 1);
     free (plan_hash);
 
-    // set the plan & the project and get ready to run
+    // set the plan, the project, and the tuner
     inject (pid, main_start, inj_set_project);
     inject (pid, main_start, inj_set_plan);
+    inject (pid, main_start, inj_set_tuner);
+
 
     iter=0;
     while (tuning) {
