@@ -18,7 +18,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
-#include <errno.h>
 #include <sys/stat.h>
 
 #include "fossa.h"
@@ -32,24 +31,24 @@ elf_load (char* elf_file)
     
     fd_elf = open (elf_file, O_RDONLY);
     if (fd_elf == -1) {
-        fprintf (stderr, "Could not open %s: %i\n", elf_file, strerror(errno));
+        fprintf (stderr, "fossa: cannot run `%s': No such file\n", elf_file);
         exit (1);
     }
 
     if (fstat (fd_elf, &elf_stat) == -1) {
-        fprintf (stderr, "Could not stat %s: %i\n", elf_file, strerror(errno));
+        fprintf (stderr, "fossa: cannot run `%s': Could not stat file\n", elf_file);
         exit (1);
     }
 
     elf_img = (u_char *)calloc (sizeof(u_char), elf_stat.st_size);
     if (!elf_img) {
-        fprintf (stderr, "No enough memory\n");
+        fprintf (stderr, "fossa: cannot run `%s': Not enough memory\n", elf_file);
         close (fd_elf);
         exit (1);
     }
 
     if (read (fd_elf, elf_img, elf_stat.st_size) != elf_stat.st_size) {
-        fprintf (stderr, "Error while copying file into memory: %i\n", strerror(errno));
+        fprintf (stderr, "fossa: cannot run `%s': File read error\n", elf_file);
         free (elf_img);
         close (fd_elf);
         exit (1);
