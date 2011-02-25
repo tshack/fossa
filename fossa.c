@@ -221,10 +221,14 @@ main (int argc, char* argv[], char* envp[])
             "Please run fossa in tune mode with the -m option\n\n"
         );
         print_usage ();
+    } else if (!planless && (opt.mode == 1)) {
+        opt.mode = 1;
+    } else {
+        opt.mode = planless;
     }
 
     // build the rest of the injections
-    inj_start       = inject_build_start     (tbox->start, planless);
+    inj_start       = inject_build_start     (tbox->start, opt.mode);
     inj_end         = inject_build_end       (tbox->end);
     inj_set_project = inject_build_prjpln    (tbox->set_project, project);
     inj_set_plan    = inject_build_prjpln    (tbox->set_plan, plan_hash);
