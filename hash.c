@@ -37,7 +37,8 @@ hash (struct fossa_options *opt)
     int hash_len;
 
     strcpy (input, "");
-    for (i=0; i<opt->child_argc; i++) {
+    strcat (input, opt->child_prg);
+    for (i=1; i<opt->child_argc; i++) {
         strcat (input, opt->child_argv[i]);
         strcat (input, " ");
     }
