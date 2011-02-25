@@ -86,8 +86,6 @@ step_till_ret (pid_t pid)
     long eip;
 
     while (opcode != 0xc3) {
-        pt_singlestep (pid);
-
         eip = pt_get_eip (pid);
         inst = pt_get_instruction (pid);
         opcode = (unsigned char)inst;
@@ -98,20 +96,47 @@ step_till_ret (pid_t pid)
         // the call instruction is 5 bytes
         if (opcode == 0xe8) {
 //            fprintf (stderr, "stepping over\n");
+            pt_stepover (pid, 5);
+        }
+        // also deal with calls to register contents
+        // these are usually dlsym calls such as: call *%eax
+        // these call instructions are just 2 bytes
+        else if (opcode == 0xff) {
+            opcode = (unsigned char)(inst >> 8);
+            if ( (opcode == 0xd0) ||    /*  call *%eax   */
+                 (opcode == 0xd3) ||    /*  call *%ebx   */
+                 (opcode == 0xd1) ||    /*  call *%ecx   */
+                 (opcode == 0xd2) ||    /*  call *%edx   */
+                 (opcode == 0x10) ||    /*  call *(%eax) */
+                 (opcode == 0x13) ||    /*  call *(%ebx) */
+                 (opcode == 0x11) ||    /*  call *(%ecx) */
+                 (opcode == 0x12) ||    /*  call *(%edx) */
+                 (opcode == 0x18) ||    /* lcall *(%eax) */
+                 (opcode == 0x1b) ||    /* lcall *(%ebx) */
+                 (opcode == 0x19) ||    /* lcall *(%ecx) */
+                 (opcode == 0x1a)       /* lcall *(%edx) */
+               )
+            {
+//                fprintf (stderr, "stepping over\n");
+                pt_stepover (pid, 2);
+            }
+        }
+        else if (opcode != 0xc3) {
+            pt_singlestep (pid);
+        }
+        else if (opcode == 0xc3) {
+            // replace ret with int3
             eip = pt_get_eip (pid);
-            old_inst = pt_set_breakpoint (pid, eip + 5);
-            pt_continue (pid);
-            pt_rm_breakpoint (pid, old_inst);
+            pt_set_breakpoint (pid, eip);
+            return eip;
+        }
+        else {
+            fprintf (stderr, "execution path tracer is confused (?!) quitting...\n\n");
+            exit (1);
         }
     }
 
-    // replace ret with int3
-    eip = pt_get_eip (pid);
-    pt_set_breakpoint (pid, eip);
-
-//    fprintf (stderr, "main() ends @ 0x%lx\n", eip);
-
-    return eip;
+    return 0;
 }
 
 
@@ -244,7 +269,7 @@ main (int argc, char* argv[], char* envp[])
             pt_rm_breakpoint (pid, 0xc3);
 
             // let main() return
-            pt_continue (pid);
+            pt_detach (pid);
         }
 
         iter++;
