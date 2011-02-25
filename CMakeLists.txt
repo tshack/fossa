@@ -91,8 +91,48 @@ SET ( SRC_fossa
 
 
 ## BUILD TARGETS #######################################
-ADD_EXECUTABLE ( fossa
+ADD_EXECUTABLE (fossa
     ${SRC_fossa}
 )
 ADD_DEPENDENCIES (fossa libcuzmem)
+########################################################
+
+
+
+## DEB PACKAGE GENERATION STUFF ########################
+set (CPACK_DEBIAN_PACKAGE_NAME "fossa")
+IF (_arch_x86_64_)
+set (CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
+ELSE (_arch_x86_64_)
+set (CPACK_DEBIAN_PACKAGE_ARCHITECTURE "i386")
+ENDIF (_arch_x86_64_)
+set (CPACK_DEBIAN_PACKAGE_DEPENDS "libgcrypt11 (>=1.4)")
+set (CPACK_PACKAGE_CONTACT "tshack@users.sourceforge.net")
+set (CPACK_DEBIAN_PACKAGE_DESCRIPTION "fossa\n Fossa is a runtime CUDA memory optimizer. With fossa, users can run CUDA applications that require more than the available amount of GPU memory. Fossa is currently targeted exclusively toward command line driven applications.")
+set (CPACK_DEBIAN_PACKAGE_SECTION "devel")
+########################################################
+
+## GENERAL PACKAGE STUFF ###############################
+SET (CPACK_PACKAGE_VERSION_MAJOR "build")
+SET (CPACK_PACKAGE_VERSION_MINOR ${SVN_REV})
+IF (_arch_x86_64_)
+SET (CPACK_PACKAGE_VERSION_PATCH "amd64")
+ELSE (_arch_x86_64_)
+SET (CPACK_PACKAGE_VERSION_PATCH "i386")
+ENDIF (_arch_x86_64_)
+SET (CPACK_SOURCE_IGNORE_FILES
+  "/.svn"
+  "~$"
+)
+INCLUDE (CPack)
+########################################################
+
+## INSTALL TARGETS (used by CPack) #####################
+INSTALL (TARGETS fossa
+    RUNTIME DESTINATION bin
+)
+
+INSTALL (FILES "${CMAKE_BINARY_DIR}/libcuzmem.so"
+    DESTINATION lib
+)
 ########################################################
