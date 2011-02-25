@@ -224,7 +224,7 @@ main (int argc, char* argv[], char* envp[])
     }
 
     // build the rest of the injections
-    inj_start       = inject_build_start     (tbox->start);
+    inj_start       = inject_build_start     (tbox->start, planless);
     inj_end         = inject_build_end       (tbox->end);
     inj_set_project = inject_build_prjpln    (tbox->set_project, project);
     inj_set_plan    = inject_build_prjpln    (tbox->set_plan, plan_hash);
