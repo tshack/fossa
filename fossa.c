@@ -25,6 +25,7 @@
 #include "elf_tools.h"
 #include "child_tools.h"
 #include "inject.h"
+#include "hash.h"
 
 //#define DEBUG
 
@@ -180,6 +181,7 @@ main (int argc, char* argv[], char* envp[])
 {
     pid_t pid;
     int i, iter;
+    char* plan_hash;
     int correctly_invoked = 0, tuning = 1;
     Elf_Addr main_start, ret_addr;
     struct fossa_options opt;
@@ -211,13 +213,14 @@ main (int argc, char* argv[], char* envp[])
     pid = child_fork (opt.child_prg, opt.child_argv);
     init_main (pid, &main_start);
     tbox = create_toolbox (pid);
+    plan_hash = hash (&opt);
 
     // build the injections
     inj_start       = inject_build_start     (tbox->start);
     inj_end         = inject_build_end       (tbox->end);
-    inj_check_plan  = inject_build_checkplan (tbox->check_plan, "fossa", "test");
+    inj_check_plan  = inject_build_checkplan (tbox->check_plan, "fossa", plan_hash);
     inj_set_project = inject_build_prjpln    (tbox->set_project, "fossa");
-    inj_set_plan    = inject_build_prjpln    (tbox->set_plan, "test");
+    inj_set_plan    = inject_build_prjpln    (tbox->set_plan, plan_hash);
 
     inject (pid, main_start, inj_set_project);
     inject (pid, main_start, inj_set_plan);

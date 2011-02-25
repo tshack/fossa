@@ -17,6 +17,8 @@
 cmake_minimum_required (VERSION 2.8)
 Project ( fossa )
 
+SET (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+
 ##-----------------------------------------------------------------------------
 ##  Detect 32-bit or 64-bit machine
 ##-----------------------------------------------------------------------------
@@ -31,7 +33,6 @@ IF (NOT APPLE)
     MESSAGE (STATUS "Machine arch is x86_64")
   ENDIF (CMAKE_SIZEOF_VOID_P EQUAL 4)
 ENDIF (NOT APPLE)
-
 
 CONFIGURE_FILE (
     ${CMAKE_CURRENT_SOURCE_DIR}/fossa.h.in
@@ -56,6 +57,16 @@ ADD_CUSTOM_TARGET (libcuzmem
 ########################################################
 
 
+## LIBGCRYPT ###########################################
+FIND_PACKAGE (libgcrypt)
+
+IF (LIBGCRYPT_FOUND)
+    INCLUDE_DIRECTORIES (${LIBGCRYPT_INCLUDE_DIR})
+    LINK_LIBRARIES (${LIBGCRYPT_LIBRARY})
+ENDIF (LIBGCRYPT_FOUND)
+########################################################
+
+
 ## BUILD TARGET SOURCE FILES ###########################
 SET ( SRC_fossa
     fossa.c
@@ -64,6 +75,7 @@ SET ( SRC_fossa
     elf_tools.c
     child_tools.c
     inject.c
+    hash.c
 )
 ########################################################
 
