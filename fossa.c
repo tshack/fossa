@@ -168,10 +168,6 @@ create_toolbox (pid_t pid)
 
     printf ("success.\n");
 
-    printf ("  * tbox->start : 0x%lx\n", (unsigned long)tbox->start);
-    printf ("  * tbox->end   : 0x%lx\n", (unsigned long)tbox->end);
-    printf ("  * tbox->prj   : 0x%lx\n", (unsigned long)tbox->set_project);
-    
     return tbox;
 }
 
@@ -180,8 +176,9 @@ int
 main (int argc, char* argv[], char* envp[])
 {
     pid_t pid;
-    int i, iter;
+    int i, iter, planless;
     char* plan_hash;
+    char project[FILENAME_MAX];
     int correctly_invoked = 0, tuning = 1;
     Elf_Addr main_start, ret_addr;
     struct fossa_options opt;
@@ -205,7 +202,8 @@ main (int argc, char* argv[], char* envp[])
     }
     // --------------------------------------------------------------------------
 
-    opt.mode = 1;
+    // make run mode the default mode
+    opt.mode = 0;
 
     // initialization
     parse_cmdline (&opt, argc, argv);
@@ -215,16 +213,32 @@ main (int argc, char* argv[], char* envp[])
     tbox = create_toolbox (pid);
     plan_hash = hash (&opt);
 
-    // build the injections
+    // setup project directory for this child program
+    sprintf (project, "fossa/%s", strrchr(opt.child_prg, '/')+1);
+
+    // we need the check plan injection 1st
+    inj_check_plan  = inject_build_checkplan (tbox->check_plan, project, plan_hash);
+    planless = inject (pid, main_start, inj_check_plan);
+
+    // no plan and run mode?  no sir!
+    if (planless && (opt.mode == 0)) {
+        fprintf (stderr, "\n"
+            "There is no plan for the specified program.\n"
+            "Please run fossa in tune mode with the -m option\n\n"
+        );
+        print_usage ();
+    }
+
+    // build the rest of the injections
     inj_start       = inject_build_start     (tbox->start);
     inj_end         = inject_build_end       (tbox->end);
-    inj_check_plan  = inject_build_checkplan (tbox->check_plan, "fossa", plan_hash);
-    inj_set_project = inject_build_prjpln    (tbox->set_project, "fossa");
+    inj_set_project = inject_build_prjpln    (tbox->set_project, project);
     inj_set_plan    = inject_build_prjpln    (tbox->set_plan, plan_hash);
+    free (plan_hash);
 
+    // set the plan & the project and get ready to run
     inject (pid, main_start, inj_set_project);
     inject (pid, main_start, inj_set_plan);
-//    inject (pid, main_start, inj_check_plan);
 
     iter=0;
     while (tuning) {

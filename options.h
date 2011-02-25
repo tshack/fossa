@@ -30,4 +30,7 @@ struct fossa_options {
 void
 parse_cmdline (struct fossa_options *opt, int argc, char* argv[]);
 
+void
+print_usage (void);
+
 #endif /* #ifndef _options_h_ */
