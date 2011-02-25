@@ -30,6 +30,9 @@ print_usage (void)
     "Options:\n"
     " -m mode      Either \"tune\" or \"run\" (default: run)\n"
     "\n"
+    " --version    Display version and license information\n"
+    " --help       Display this information\n"
+    "\n"
     );
     exit (1);
 }
@@ -98,6 +101,9 @@ parse_cmdline (struct fossa_options *opt, int argc, char* argv[])
         }
         else if (!strcmp (argv[i], "--version")) {
             print_version ();
+        }
+        else if (!strcmp (argv[i], "--help")) {
+            print_usage ();
         }
         else {
             print_usage ();
