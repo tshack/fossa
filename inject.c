@@ -59,7 +59,7 @@ patch_addr (unsigned char* buf, long addr)
 
 
 struct code_injection*
-inject_build_start (Elf_Addr addr)
+inject_build_start (Elf_Addr addr, unsigned int mode)
 {
     struct code_injection *inject;
 
@@ -80,6 +80,7 @@ inject_build_start (Elf_Addr addr)
     inject->code = malloc (inject->size);
 
 #if _arch_i386_
+    // TODO: UNTESTED
     memcpy (inject->code, 
         "\xc7\x44\x24\x04\x00\x00\x00"  /* movl   $0x0, 0x4(%esp)   */
         "\x00"
@@ -89,6 +90,7 @@ inject_build_start (Elf_Addr addr)
         "\xcc",                         /* int3                     */
         inject->size
     );
+    *(inject->code + 11) = (unsigned char)(mode & 0xFF);
 #elif _arch_x86_64_
     memcpy (inject->code, 
         "\x48\xb8"                      /* mov $0x1234567812345678, %rax */
@@ -100,6 +102,7 @@ inject_build_start (Elf_Addr addr)
         "\xcc",                         /* int3                          */
         inject->size
     );
+    *(inject->code + 16) = (unsigned char)(mode & 0xFF);
 #endif
 
     patch_addr (inject->code + inject->pidx, addr);

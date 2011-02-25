@@ -31,7 +31,7 @@ void
 patch_addr (unsigned char* buf, long addr);
 
 struct code_injection*
-inject_build_start (Elf_Addr addr);
+inject_build_start (Elf_Addr addr, unsigned int mode);
 
 struct code_injection*
 inject_build_end (Elf_Addr addr);
