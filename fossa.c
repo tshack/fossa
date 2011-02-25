@@ -187,20 +187,6 @@ main (int argc, char* argv[], char* envp[])
                           *inj_set_project, *inj_set_plan,
                           *inj_check_plan;
 
-    // --------------------------------------------------------------------------
-    // make sure the instrumentation library was LD_PRELOADED
-    for (i=0; envp[i]; i++) {
-        if (strstr (envp[i], "LD_PRELOAD=./libcuzmem.so")) {
-            correctly_invoked = 1;
-        }
-    }
-    if (!correctly_invoked) {
-        fprintf (stderr, "%s cannot be ran directly.\n"
-                         "please run using included script\n\n",
-                         file_from_path(argv[0]));
-        exit (0);
-    }
-    // --------------------------------------------------------------------------
 
     // make run mode the default mode
     opt.mode = 0;
@@ -208,7 +194,7 @@ main (int argc, char* argv[], char* envp[])
     // initialization
     parse_cmdline (&opt, argc, argv);
     elf_get_func (opt.child_prg, "main", &main_start, NULL);
-    pid = child_fork (opt.child_prg, opt.child_argv);
+    pid = child_fork (opt.child_argv, envp);
     init_main (pid, &main_start);
     tbox = create_toolbox (pid);
     plan_hash = hash (&opt);
