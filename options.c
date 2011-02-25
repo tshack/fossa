@@ -27,7 +27,7 @@ print_usage (void)
     printf (
     "Usage: fossa [options] cuda_program [cuda_program options]\n\n"
     "Options:\n"
-    " -m mode      Either \"tune\" or \"run\" (default: tune)\n"
+    " -m mode      Either \"tune\" or \"run\" (default: run)\n"
     "\n"
     );
     exit (1);
@@ -38,7 +38,7 @@ check_syntax (int i, int argc, char* argv[])
 {
     if (
         (i == argc-1)          ||
-        (argv[i+1][0] == "-")
+        (argv[i+1][0] == '-')
        )
     {
         fprintf (stderr, "option %s missing argument\n", argv[i]);
