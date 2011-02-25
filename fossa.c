@@ -75,11 +75,21 @@ set_mode (struct fossa_options* opt, int planless)
 
     // no plan and run mode?  no sir!
     if (planless && (opt->mode == 0)) {
-        fprintf (stderr, "\n"
-            "There is no plan for the specified program.\n"
-            "Please run fossa in tune mode with the -m option\n\n"
+        printf (
+            "-----------------------------------------------------\n"
+            "NOTICE:\n"
+            "  There is no plan for the specified program.\n"
+            "  Memory mapped to the CPU may be non-optimal and\n"
+            "  could result in terribly poor program performance\n\n"
+
+            "  Please run fossa in tune mode with the -m option\n"
+            "  in order to optimize this CUDA program's memory\n"
+            "  needs to your system configuration\n"
+            "-----------------------------------------------------\n\n"
         );
-        print_usage ();
+        sleep (1);
+        opt->tuner = 0;     // use "no tune" tuner
+        opt->mode = 1;      // enter tuning mode
     }
     // we want to tune and we already have a plan
     else if (!planless && (opt->mode == 1)) {
@@ -205,7 +215,6 @@ create_toolbox (pid_t pid)
     }
 
     printf ("success.\n");
-    printf ("-----------------------------------------------------------------\n");
 
     return tbox;
 }
@@ -217,8 +226,8 @@ main (int argc, char* argv[], char* envp[])
     pid_t pid;
     int i, iter, planless;
     char* plan_hash;
+    int tuning = 1;
     char project[FILENAME_MAX];
-    int correctly_invoked = 0, tuning = 1;
     Elf_Addr main_start, ret_addr;
     struct fossa_options opt;
     struct toolbox* tbox;
@@ -227,8 +236,8 @@ main (int argc, char* argv[], char* envp[])
                           *inj_check_plan, *inj_set_tuner;
 
 
-    // make run mode the default mode
-    opt.mode = 0;
+    opt.mode = 0;       // make run mode the default mode
+    opt.tuner = 1;      // genetic tuner is default
 
     // initialization
     parse_cmdline (&opt, argc, argv);
@@ -253,7 +262,7 @@ main (int argc, char* argv[], char* envp[])
     inj_end         = inject_build_end       (tbox->end);
     inj_set_project = inject_build_prjpln    (tbox->set_project, project);
     inj_set_plan    = inject_build_prjpln    (tbox->set_plan, plan_hash);
-    inj_set_tuner   = inject_build_settuner  (tbox->set_tuner, 1);
+    inj_set_tuner   = inject_build_settuner  (tbox->set_tuner, opt.tuner);
     free (plan_hash);
 
     // set the plan, the project, and the tuner
@@ -264,7 +273,7 @@ main (int argc, char* argv[], char* envp[])
 
     iter=0;
     while (tuning) {
-        if (opt.mode == 1) {
+        if (opt.mode == 1 && opt.tuner != 0) {
             printf ("fossa: Tuning Iteration: %03i\n", iter);
             printf ("----------------------------\n", iter);
         }
@@ -291,7 +300,7 @@ main (int argc, char* argv[], char* envp[])
         if (!tuning) {
             // we are done.
             // remove the int3 @ the end of main()
-            if (opt.mode == 1) {
+            if (opt.mode == 1 && opt.tuner != 0) {
                 printf ("Tuning Complete\n");
             }
 

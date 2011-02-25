@@ -22,6 +22,7 @@
 
 struct fossa_options {
     unsigned int mode;
+    unsigned int tuner;
     char* child_prg;
     char** child_argv;
     int child_argc;
@@ -29,8 +30,5 @@ struct fossa_options {
 
 void
 parse_cmdline (struct fossa_options *opt, int argc, char* argv[]);
-
-void
-print_usage (void);
 
 #endif /* #ifndef _options_h_ */
