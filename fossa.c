@@ -81,7 +81,9 @@ init_main (pid_t pid, Elf_Addr *main_start)
     // remove the breakpoint
     pt_rm_breakpoint (pid, old_opcode);
 
-//    (*main_start)++;
+#if _arch_x86_64_
+    (*main_start)++;
+#endif
 }
 
 
