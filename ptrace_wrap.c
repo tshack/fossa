@@ -77,20 +77,6 @@ pt_continue (pid_t pid)
 
     // block until child is stopped
     do {
-        // because our we are asking the child to do some pretty outrageous
-        // memory acrobatics, there is a good chance on low memory systems that
-        // the OOM will kill the child process if its "badness score" gets high
-        // enough.  so, we should check for that...
-        waitpid (pid, &s, WNOHANG);
-#if 0
-        if ( WIFSIGNALED (s) ) {
-            if ( WTERMSIG (s) == 9 ) {
-                fprintf (stderr, "CRITICAL FAILURE: child process received SIGKILL\n");
-                fprintf (stderr, "(Probably from Linux kernel OOM service due to insufficient system memory)\n");
-                exit (1);
-            }
-        }
-#endif
         ptrace (PTRACE_GETREGS, pid, NULL, &regs) ;
     } while
 #if _arch_i386_
@@ -302,4 +288,15 @@ pt_get_instruction (pid_t pid)
     pt_peek (pid, eip, &inst, 1);
 
     return inst;
+}
+
+void
+pt_stepover (pid_t pid, unsigned int step_bytes)
+{
+    long eip, old_inst;
+
+    eip = pt_get_eip (pid);
+    old_inst = pt_set_breakpoint (pid, eip + step_bytes);
+    pt_continue (pid);
+    pt_rm_breakpoint (pid, old_inst);
 }

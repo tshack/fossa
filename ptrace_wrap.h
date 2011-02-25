@@ -72,4 +72,7 @@ pt_set_eax (pid_t pid, Elf_Addr addr);
 long
 pt_get_instruction (pid_t pid);
 
+void
+pt_stepover (pid_t pid, unsigned int step_bytes);
+
 #endif /* #ifndef _ptrace_wrap_h_ */
