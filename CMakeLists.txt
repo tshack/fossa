@@ -59,6 +59,7 @@ ADD_CUSTOM_TARGET (libcuzmem
 ## BUILD TARGET SOURCE FILES ###########################
 SET ( SRC_fossa
     fossa.c
+    options.c
     ptrace_wrap.c
     elf_tools.c
     child_tools.c
