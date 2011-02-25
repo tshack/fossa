@@ -183,7 +183,7 @@ create_toolbox (pid_t pid)
 {
     struct toolbox* tbox = malloc (sizeof (struct toolbox));
 
-    fprintf (stderr, "Searching child's symbol table for instruments... ");
+    printf ("fossa: Searching child's symbol table for instruments... ");
     tbox->start       = child_dlsym (pid, "cuzmem_start"       , "libcuzmem.so");
     tbox->end         = child_dlsym (pid, "cuzmem_end"         , "libcuzmem.so");
     tbox->set_project = child_dlsym (pid, "cuzmem_set_project" , "libcuzmem.so");
@@ -199,10 +199,13 @@ create_toolbox (pid_t pid)
          (!tbox->check_plan) )
     {
         printf ("FAILED!\n\n");
-        exit (1);
+        pritnf ("  Please make sure libcuzmem.so (included with fossa) is in your"
+                "  library path and is locatable by ld.so\n");
+        exit (1)
     }
 
     printf ("success.\n");
+    printf ("-----------------------------------------------------------------\n");
 
     return tbox;
 }
@@ -236,7 +239,7 @@ main (int argc, char* argv[], char* envp[])
     plan_hash = hash (&opt);
 
     // setup project directory for this child program
-    sprintf (project, "fossa/%s", strrchr(opt.child_prg, '/')+1);
+    sprintf (project, "fossa/%s", opt.child_prg);
 
     // launch check_plan injection to see if this program has a plan
     inj_check_plan  = inject_build_checkplan (tbox->check_plan, project, plan_hash);

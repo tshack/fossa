@@ -54,9 +54,6 @@ print_version (void)
         "but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
         "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
         "GNU General Public License for more details.\n\n"
-
-        "You should have received a copy of the GNU General Public License\n"
-        "along with this program.  If not, see <http://www.gnu.org/licenses/>.\n\n"
     );
     exit (1);
 }
@@ -71,6 +68,23 @@ check_syntax (int i, int argc, char* argv[])
     {
         fprintf (stderr, "option %s missing argument\n", argv[i]);
         exit (1);
+    }
+}
+
+// we hash opt->child_prg along with its arguments.  we don't want the path
+// included in the hash, which would require the same program living in
+// different locations (or invoked in differnt ways) to be re-tuned... not
+// good.  So we extract the program name here.  the full path is still in
+// opt->child_argv[0]
+char*
+get_child_prg (char* argv0)
+{
+    if (strrchr (argv0, '/') != NULL) {
+        // absolute path to cuda program was used
+        return strrchr (argv0, '/') + 1;
+    } else {
+        // cuda program is in user's path
+        return argv0;
     }
 }
 
@@ -115,12 +129,16 @@ parse_cmdline (struct fossa_options *opt, int argc, char* argv[])
         print_usage ();
     }
 
+    // opt->child_prg is just the program name
+    // the full path lives in opt->argv[0]
+
     // we have hit the child program argument
     if (argv[i] != NULL) {
-        opt->child_prg = argv[i];
+        opt->child_prg = get_child_prg (argv[i]);
         opt->child_argv = &argv[i];
         opt->child_argc = argc - i;
     } else {
         print_usage ();
     }
 }
+
