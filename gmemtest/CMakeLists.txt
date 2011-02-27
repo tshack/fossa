@@ -13,16 +13,16 @@ ENDIF (CUDA_FOUND)
 
 
 ## BUILD TARGET SOURCE FILES ###########################
-SET ( SRC_FCHECK
-    fossa_check.cu
+SET ( SRC_GMEMTEST
+    gmemtest.cu
 )
 ########################################################
 
 
 ## BUILD TARGETS #######################################
 CUDA_ADD_EXECUTABLE (
-    fossa_check
-    ${SRC_FCHECK}
+    gmemtest
+    ${SRC_GMEMTEST}
 )
 ########################################################
 
