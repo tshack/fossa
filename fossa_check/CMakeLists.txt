@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 2.8)
-Project ( test )
+Project ( fossa_check )
 
 
 ## CUDA STUFF ##########################################
@@ -13,16 +13,16 @@ ENDIF (CUDA_FOUND)
 
 
 ## BUILD TARGET SOURCE FILES ###########################
-SET ( SRC_TEST
-    test.cu
+SET ( SRC_FCHECK
+    fossa_check.cu
 )
 ########################################################
 
 
 ## BUILD TARGETS #######################################
 CUDA_ADD_EXECUTABLE (
-    test
-    ${SRC_TEST}
+    fossa_check
+    ${SRC_FCHECK}
 )
 ########################################################
 
