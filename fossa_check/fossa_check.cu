@@ -81,7 +81,7 @@ sanity_check (int num_blocks, int block_size)
     block_size_t = block_size * 250000 * sizeof (float);
 
     if (block_size_t*num_blocks > GPU_MEM_MAX) {
-        fprintf (stderr, "Cannot allocate %i %iMB blocks (%1.2fGB).  GPU memory map is limited to %iGB\n",
+        fprintf (stderr, "Cannot allocate %i %iMB blocks (%1.2fGB).  GPU memory map is limited to %liGB\n",
                 num_blocks, block_size, (num_blocks*block_size)/1000.f, GPU_MEM_MAX/1000000000);
         return -1;
     } else {
@@ -134,9 +134,7 @@ mem_test (float** gpu_mem, float* cpu_mem, int num_blocks, int block_size)
 int
 main (int argc, char* argv[])
 {
-    int i;
     int num_blocks;
-    int result;
     float  *cpu_mem;
     float **gpu_mem;
 
