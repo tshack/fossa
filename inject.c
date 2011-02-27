@@ -253,7 +253,7 @@ inject_build_checkplan (Elf_Addr addr, char* proj, char* plan)
     //       order to make this simple
 #if _arch_i386_
     memcpy (inject->code, 
-        "\x8d\x58\x15"                  /* lea    0x21(%eax), %ebx    */
+        "\x8d\x58\x15"                  /* lea    0x15(%eax), %ebx    */
         "\x8d\x40\xff"                  /* lea    0xff(%eax), %eax    */
         "\x89\x1c\x24"                  /* mov    %ebx, (%esp)        */
         "\x89\x44\x24\x04"              /* mov    %eax, 0x4(%esp)     */
@@ -274,7 +274,7 @@ inject_build_checkplan (Elf_Addr addr, char* proj, char* plan)
         "\xcc",                         /* int3                          */
         inject->size
     );
-    *(inject->code + 7) = inject->length + proj_len;
+    *(inject->code + 7) = inject->length + proj_len+1;
 #endif
 
     patch_addr (inject->code + inject->pidx, addr);
