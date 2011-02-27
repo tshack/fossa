@@ -37,6 +37,18 @@ ENDIF (NOT APPLE)
 INCLUDE_DIRECTORIES (BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE_DIRECTORIES (BEFORE ${CMAKE_BINARY_DIR})
 
+
+
+## PROJECT CONFIG OPTIONS ##############################
+OPTION (RELEASE_BUILD "Set when making debs, etc" OFF)
+IF (RELEASE_BUILD)
+    SET (_release_ TRUE)
+ELSE (RELEASE_BUILD)
+    SET (_release_ FALSE)
+ENDIF (RELEASE_BUILD)
+########################################################
+
+
 ## FANCY SUBVERSION STUFF ##############################
 FIND_PACKAGE (SVN)
 IF (SUBVERSION_FOUND)

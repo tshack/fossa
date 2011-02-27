@@ -47,7 +47,11 @@ child_fork (char** child_argv, char** child_envp)
     size_t envp_size;
     pid_t child_pid;
     char **new_envp = NULL;
+#if _release_
+    char preload[] = "LD_PRELOAD=libcuzmem.so";
+#else
     char preload[] = "LD_PRELOAD=./libcuzmem.so";
+#endif
 
     // Ugh!  There must be a better way to do this...
     // I'm not a string library jockey.

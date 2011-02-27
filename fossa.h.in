@@ -25,6 +25,9 @@
 #cmakedefine _arch_i386_ 1
 #cmakedefine _arch_x86_64_ 1
 
+#cmakedefine _release_ 1
+
+
 #if (_arch_x86_64_)
 #define BASE_TEXT 0x00400000
 typedef Elf64_Ehdr  Elf_Ehdr;
