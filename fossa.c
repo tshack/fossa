@@ -76,16 +76,11 @@ set_mode (struct fossa_options* opt, int planless)
     // no plan and run mode?  no sir!
     if (planless && (opt->mode == 0)) {
         printf (
-            "-----------------------------------------------------\n"
-            "NOTICE:\n"
-            "  There is no plan for the specified program.\n"
-            "  Memory mapped to the CPU may be non-optimal and\n"
-            "  could result in terribly poor program performance\n\n"
-
-            "  Please run fossa in tune mode with the -m option\n"
-            "  in order to optimize this CUDA program's memory\n"
-            "  needs to your system configuration\n"
-            "-----------------------------------------------------\n\n"
+            "---------------------------------------------------------------------------\n"
+            "  fossa does not have an optimized memory configuration for `%s'\n"
+            "  Performance may be poor.  Run fossa in tune mode (-m option) to optimize \n"
+            "---------------------------------------------------------------------------\n\n",
+            opt->child_prg
         );
         sleep (1);
         opt->tuner = 0;     // use "no tune" tuner
@@ -209,8 +204,8 @@ create_toolbox (pid_t pid)
          (!tbox->check_plan) )
     {
         printf ("FAILED!\n\n");
-        printf ("  Please make sure libcuzmem.so (included with fossa) is in your"
-                "  library path and is locatable by ld.so\n");
+        printf ("  Please make sure libcuzmem.so (included with fossa) is in your\n"
+                "  library path and is locatable by ld.so\n\n");
         exit (1);
     }
 
