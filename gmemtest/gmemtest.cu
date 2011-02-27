@@ -35,7 +35,8 @@ init_gpu_mem (int num_blocks, int block_size)
     int i;
     float **gpu_mem;
 
-    fprintf (stderr, "Allocating %i %iMB blocks of GPU memory.\n", num_blocks, block_size);
+    fprintf (stderr, "Allocating %i %iMB blocks of GPU memory. (%i MB)\n",
+            num_blocks, block_size, block_size*num_blocks);
 
     // convert from MB to bytes
     block_size *= 250000 * sizeof (float);
