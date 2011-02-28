@@ -236,7 +236,7 @@ main (int argc, char* argv[], char* envp[])
 
     // initialization
     parse_cmdline (&opt, argc, argv);
-    elf_get_func (opt.child_prg, "main", &main_start, NULL);
+    elf_get_func (opt.child_argv[0], "main", &main_start, NULL);
     pid = child_fork (opt.child_argv, envp);
     init_main (pid, &main_start);
     tbox = create_toolbox (pid);
