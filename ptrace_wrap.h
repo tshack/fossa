@@ -75,4 +75,7 @@ pt_get_instruction (pid_t pid);
 void
 pt_stepover (pid_t pid, unsigned int step_bytes);
 
+int
+child_exited (pid_t pid);
+
 #endif /* #ifndef _ptrace_wrap_h_ */
