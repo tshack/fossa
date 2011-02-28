@@ -42,7 +42,7 @@ void
 print_version (void)
 {
     printf (
-        "fossa  (build " SVN_REV ")\n"
+        "fossa " FOSSA_VERSION " (build " SVN_REV ")\n"
         "Copyright (C) 2011  James A. Shackleford\n\n"
 
         "fossa is free software: you can redistribute it and/or modify\n"

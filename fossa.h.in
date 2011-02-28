@@ -20,6 +20,7 @@
 
 #include <elf.h>
 
+#define FOSSA_VERSION "@FOSSA_VER_MAJOR@.@FOSSA_VER_MINOR@.@FOSSA_VER_PATCH@"
 #define SVN_REV "@SVN_REV@"
 
 #cmakedefine _arch_i386_ 1
