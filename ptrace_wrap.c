@@ -19,10 +19,12 @@
 #include <stdio.h>
 #include <string.h> 
 #include <errno.h>
+#include <fcntl.h>
 #include <sys/ptrace.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/user.h>
+#include <sys/stat.h>
 
 #include "fossa.h"
 #include "ptrace_wrap.h"
@@ -77,7 +79,9 @@ pt_continue (pid_t pid)
 
     // block until child is stopped
     do {
-        ptrace (PTRACE_GETREGS, pid, NULL, &regs) ;
+        waitpid (pid, NULL, WNOHANG);
+        if (child_exited (pid)) { exit (0); }
+        ptrace (PTRACE_GETREGS, pid, NULL, &regs);
     } while
 #if _arch_i386_
         ( ptrace (PTRACE_PEEKDATA, pid, regs.eip, NULL) == -1 );
@@ -165,6 +169,8 @@ pt_singlestep (pid_t pid)
 
     // block until child is stopped
     do {
+        waitpid (pid, NULL, WNOHANG);
+        if (child_exited (pid)) { exit (0); }
         ptrace (PTRACE_GETREGS, pid, NULL, &regs) ;
     } while
 #if _arch_i386_
@@ -299,4 +305,25 @@ pt_stepover (pid_t pid, unsigned int step_bytes)
     old_inst = pt_set_breakpoint (pid, eip + step_bytes);
     pt_continue (pid);
     pt_rm_breakpoint (pid, old_inst);
+}
+
+int
+child_exited (pid_t pid)
+{
+    // This is a part of a nasty hack to get around wait not
+    // working properly when ptracing a willing child process
+
+    int fd;
+    char fn[FILENAME_MAX];
+
+    sprintf (fn, "/proc/%i/status", pid);
+    fd = open (fn, O_RDONLY);
+
+    if (fd < 0) {
+        close (fd);
+        return 1;
+    } else {
+        close (fd);
+        return 0;
+    }
 }
