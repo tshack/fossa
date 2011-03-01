@@ -296,7 +296,7 @@ main (int argc, char* argv[], char* envp[])
             // we are done.
             // remove the int3 @ the end of main()
             if (opt.mode == 1 && opt.tuner != 0) {
-                printf ("Tuning Complete\n");
+                printf ("fossa: Tuning Complete\n");
             }
 
             // jump back just after the breakpoint
