@@ -28,7 +28,7 @@ print_usage (void)
     printf (
     "Usage: fossa [options] cuda_program [cuda_program options]\n\n"
     "Options:\n"
-    " -m mode      Either \"tune\" or \"run\" (default: run)\n"
+    " --tune       Generate an optimized memory allocation plan for cuda_program\n"
     "\n"
     " --version    Display version and license information\n"
     " --help       Display this information\n"
@@ -112,6 +112,9 @@ parse_cmdline (struct fossa_options *opt, int argc, char* argv[])
                 print_usage ();
                 exit (1);
             }
+        }
+        else if (!strcmp (argv[i], "--tune")) {
+            opt->mode = 1;
         }
         else if (!strcmp (argv[i], "--version")) {
             print_version ();

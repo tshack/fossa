@@ -78,7 +78,7 @@ set_mode (struct fossa_options* opt, int planless)
         printf (
             "---------------------------------------------------------------------------\n"
             "  fossa does not have an optimized memory configuration for `%s'\n"
-            "  Performance may be poor.  Run fossa in tune mode (-m option) to optimize \n"
+            "  Performance may be poor.  Run fossa in tune mode (--tune) to optimize \n"
             "---------------------------------------------------------------------------\n\n",
             opt->child_prg
         );
