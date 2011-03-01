@@ -29,6 +29,7 @@ print_usage (void)
     "Usage: fossa [options] cuda_program [cuda_program options]\n\n"
     "Options:\n"
     " --tune       Generate an optimized memory allocation plan for cuda_program\n"
+    " --oom val    Adjust cuda_program's oom_adj value (-17 to +15). [requires sudo]\n"
     "\n"
     " --version    Display version and license information\n"
     " --help       Display this information\n"
@@ -66,8 +67,11 @@ check_syntax (int i, int argc, char* argv[])
         (argv[i+1][0] == '-')
        )
     {
-        fprintf (stderr, "option %s missing argument\n", argv[i]);
-        exit (1);
+        // make sure oparand isn't a negative number
+        if ((argv[i+1][1] < 0x30) || (argv[i+1][1] > 0x39)) {
+            fprintf (stderr, "option %s missing argument\n", argv[i]);
+            exit (1);
+        }
     }
 }
 
@@ -108,13 +112,24 @@ parse_cmdline (struct fossa_options *opt, int argc, char* argv[])
                 opt->mode = 0;
             }
             else {
-                fprintf (stderr, "Unknown fossa mode\n");
+                fprintf (stderr, "fossa: invalide mode\n");
                 print_usage ();
                 exit (1);
             }
         }
         else if (!strcmp (argv[i], "--tune")) {
             opt->mode = 1;
+        }
+        else if (!strcmp (argv[i], "--oom")) {
+            check_syntax (i++, argc, argv);
+            if ((atoi(argv[i]) < 16) && (atoi(argv[i]) > -18)) {
+                opt->oom_adj = atoi(argv[i]);
+            }
+            else {
+                fprintf (stderr, "fossa: invalid oom_adj value\n");
+                print_usage ();
+                exit (1);
+            }
         }
         else if (!strcmp (argv[i], "--version")) {
             print_version ();

@@ -233,11 +233,12 @@ main (int argc, char* argv[], char* envp[])
 
     opt.mode = 0;       // make run mode the default mode
     opt.tuner = 1;      // genetic tuner is default
+    opt.oom_adj = 0;
 
     // initialization
     parse_cmdline (&opt, argc, argv);
     elf_get_func (opt.child_argv[0], "main", &main_start, NULL);
-    pid = child_fork (opt.child_argv, envp);
+    pid = child_fork (opt.child_argv, envp, opt.oom_adj);
     init_main (pid, &main_start);
     tbox = create_toolbox (pid);
     plan_hash = hash (&opt);

@@ -19,6 +19,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <link.h>
+#include <unistd.h>
+#include <sys/types.h>
 #include <sys/user.h>
 #include <sys/stat.h>
 
@@ -39,9 +41,32 @@ file_from_path (char* full_path)
     return file_name;
 }
 
+void
+child_drop_root (void)
+{
+    int uid;   // user id that called sudo
+
+    // if running fossa with sudo have child drop the root privs
+    if (geteuid() == 0) {
+        uid = atoi (getenv ("SUDO_UID"));
+        setuid (uid);
+    }
+}
+
+void
+child_oom_adj (pid_t pid, int oom_adj)
+{
+    FILE* fd;
+    char fn[FILENAME_MAX];
+
+    sprintf (fn, "/proc/%i/oom_adj", pid);
+    fd = fopen (fn, "r+");
+    fprintf (fd, "%i\n", oom_adj);
+    fclose (fd);
+}
 
 pid_t
-child_fork (char** child_argv, char** child_envp)
+child_fork (char** child_argv, char** child_envp, int oom_adj)
 {
     int i;
     size_t envp_size;
@@ -52,9 +77,6 @@ child_fork (char** child_argv, char** child_envp)
 #else
     char preload[] = "LD_PRELOAD=./libcuzmem.so";
 #endif
-
-    // Ugh!  There must be a better way to do this...
-    // I'm not a string library jockey.
 
     for (i=0; child_envp[i] != NULL; i++);
     envp_size = (i+1) * sizeof (char*); 
@@ -75,6 +97,7 @@ child_fork (char** child_argv, char** child_envp)
             exit (1);
         case 0: 
             pt_allow_trace ();
+            child_drop_root ();
             execve (child_argv[0], child_argv, new_envp);
             exit (1);
     }
@@ -82,6 +105,11 @@ child_fork (char** child_argv, char** child_envp)
 
     // The child is stopped @ this point due to the execv() call
     // (received SIGTRAP)
+
+
+    // try to set oom_adj for child
+    // will only work if user ran fossa with sudo
+    child_oom_adj (child_pid, oom_adj);
 
     return child_pid;
 }
