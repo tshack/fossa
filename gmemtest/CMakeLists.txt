@@ -13,8 +13,12 @@ ENDIF (CUDA_FOUND)
 
 
 ## BUILD TARGET SOURCE FILES ###########################
-SET ( SRC_GMEMTEST
+SET (SRC_GMEMTEST
     gmemtest.cu
+)
+
+SET (SRC_GMEMSHRINK
+    gmemshrink.cu
 )
 ########################################################
 
@@ -23,6 +27,11 @@ SET ( SRC_GMEMTEST
 CUDA_ADD_EXECUTABLE (
     gmemtest
     ${SRC_GMEMTEST}
+)
+
+CUDA_ADD_EXECUTABLE (
+    gmemshrink
+    ${SRC_GMEMSHRINK}
 )
 ########################################################
 
