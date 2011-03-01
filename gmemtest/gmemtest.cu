@@ -157,6 +157,7 @@ main (int argc, char* argv[])
 
 
     free_gpu_mem (gpu_mem, num_blocks);
+    free (cpu_mem);
 
     return 0;
 }
