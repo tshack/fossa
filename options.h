@@ -26,6 +26,7 @@ struct fossa_options {
     char* child_prg;
     char** child_argv;
     int child_argc;
+    int oom_adj;
 };
 
 void
